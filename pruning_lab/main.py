@@ -1,8 +1,31 @@
-"""Command-line entry point for training, pruning, and evaluating models."""
+"""Command-line entry point for training, pruning, and evaluating models.
+
+Background:
+    Command-line interfaces (CLIs) are common in machine learning
+    research because they make experiments reproducible.  Instead of
+    editing Python files each time you change a hyperparameter, you pass
+    arguments such as ``--lr`` or ``--epochs`` directly to a script.  The
+    standard workflow looks like this:
+
+    .. code-block:: bash
+
+        python -m pruning_lab.main train --model resnet18 --epochs 200
+
+    The ``-m`` flag tells Python to execute a module.  Inside this file
+    we parse the arguments, construct the appropriate model and
+    DataLoader, and call the training/pruning/evaluation helpers defined
+    elsewhere in the repository.
+
+Lab connection:
+    The assignment requires multiple steps (train, prune, evaluate).  By
+    understanding the CLI you can run these steps on any machine—from
+    your laptop to a school server—while keeping a record of exactly
+    which flags were used.
+"""
 
 from __future__ import annotations
 
-import argparse
+import argparse  # Builds the command-line interface.
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,11 +53,11 @@ from pruning_lab.train.train_loop import (
 
 @dataclass
 class ModelSpec:
-    name: str
-    builder: Callable[..., torch.nn.Module]
-    default_img_size: int
-    default_pretrained: bool
-    force_pretrained: bool = False
+    name: str  # Identifier exposed to the CLI.
+    builder: Callable[..., torch.nn.Module]  # Function that returns an instantiated model.
+    default_img_size: int  # Image size expected by the model (used for dataloaders).
+    default_pretrained: bool  # Whether pretrained weights are loaded by default.
+    force_pretrained: bool = False  # If True, CLI cannot disable pretraining.
 
 
 MODEL_SPECS: Dict[str, ModelSpec] = {
@@ -74,8 +97,9 @@ MODEL_SPECS: Dict[str, ModelSpec] = {
 
 
 def _parse_args() -> argparse.Namespace:
+    """Define the CLI surface and parse user-provided arguments."""
     parser = argparse.ArgumentParser(description="Efficient pruning lab CLI")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(dest="command", required=True)  # Parent parser for subcommands.
 
     # Train command
     train_parser = subparsers.add_parser("train", help="Train a model from scratch or fine-tune")
@@ -218,12 +242,14 @@ def _add_model_arguments(parser: argparse.ArgumentParser, include_pretrained_fla
 
 
 def _resolve_device(device_arg: Optional[str]) -> torch.device:
+    """Select the compute device used for a run."""
     if device_arg:
         return torch.device(device_arg)
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def _build_model(args: argparse.Namespace, allow_override: bool = True, drop_path: Optional[float] = None) -> torch.nn.Module:
+    """Instantiate a model according to CLI flags and defaults."""
     spec = MODEL_SPECS[args.model]
     pretrained = spec.default_pretrained
     if not spec.force_pretrained and allow_override and hasattr(args, "pretrained") and args.pretrained is not None:
@@ -232,7 +258,7 @@ def _build_model(args: argparse.Namespace, allow_override: bool = True, drop_pat
         pretrained = spec.default_pretrained
 
     img_size = args.img_size or spec.default_img_size
-    builder_kwargs: Dict[str, Any] = {"drop_path": drop_path if drop_path is not None else getattr(args, "drop_path", 0.1)}
+    builder_kwargs: Dict[str, Any] = {"drop_path": drop_path if drop_path is not None else getattr(args, "drop_path", 0.1)}  # Extra options forwarded to builder.
     model = spec.builder(
         pretrained=pretrained,
         num_classes=args.num_classes,
@@ -246,6 +272,8 @@ def handle_train(args: argparse.Namespace) -> None:
     device = _resolve_device(args.device)
     model = _build_model(args)
     if args.init_checkpoint:
+        # Advanced use-case: warm-start from a custom checkpoint rather
+        # than the default torchvision/timm initialisation.
         state = torch.load(args.init_checkpoint, map_location="cpu")
         model.load_state_dict(state["model_state"] if "model_state" in state else state, strict=False)
 
