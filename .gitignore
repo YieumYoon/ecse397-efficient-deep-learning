@@ -1,6 +1,7 @@
 .DS_Store
 .vscode
 *.pdf
+.venv/
 
 ./pycache/
 ./__pycache__/
@@ -11,4 +12,9 @@ pruning_lab/models/__pycache__/
 pruning_lab/train/__pycache__/
 pruning_lab/utils/__pycache__/
 pruning_lab/train/__pycache__/
-pruning_lab/__pycache__
+pruning_lab/__pycache__/
+
+*.out
+
+runs/
+
