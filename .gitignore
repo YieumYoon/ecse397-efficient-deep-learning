@@ -18,3 +18,5 @@ pruning_lab/__pycache__/
 
 runs/
 
+pruning_lab/data/cifar-10-batches-py
+pruning_lab/data/cifar-10-python.tar.gz
