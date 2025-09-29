@@ -15,7 +15,7 @@ Why this file matters:
     re-applied before measurement so sparsity figures remain valid.
 """
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 from dataclasses import dataclass
 from pathlib import Path

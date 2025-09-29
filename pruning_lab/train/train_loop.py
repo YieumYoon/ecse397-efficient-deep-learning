@@ -26,7 +26,7 @@ Connection to Lab 1:
     different dataset or architecture later on.
 """
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 import json  # For writing metrics/history to disk.
 from dataclasses import dataclass, field

@@ -1,22 +1,44 @@
 .DS_Store
-.vscode
-*.pdf
+
+# IDE
+.vscode/
+.idea/
+
+# Python bytecode and caches
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
 .venv/
+venv/
+.env
+.envrc
 
-./pycache/
-./__pycache__/
-./*/__pycache__/
-pruning_lab/data/__pycache__/
-pruning_lab/inference/__pycache__/
-pruning_lab/models/__pycache__/
-pruning_lab/train/__pycache__/
-pruning_lab/utils/__pycache__/
-pruning_lab/train/__pycache__/
-pruning_lab/__pycache__/
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
+# Logs and run artifacts
+logs/
 *.out
-
+*.err
 runs/
+archive/
 
-pruning_lab/data/cifar-10-batches-py
+# Downloaded/generated data
+pruning_lab/data/cifar-10-batches-py/
 pruning_lab/data/cifar-10-python.tar.gz
+
+# Packaging
+*.zip
+
+# Docs and misc
+*.pdf
+
+# Modles 
+pruning_lab/models_saved/
+
+# Job status
+JOB_STATUS.txt

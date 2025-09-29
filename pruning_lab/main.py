@@ -23,7 +23,7 @@ Lab connection:
     which flags were used.
 """
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 import argparse  # Builds the command-line interface.
 import json
@@ -41,6 +41,7 @@ from pruning_lab.train.prune import (
     apply_masks,
     magnitude_unstructured_prune,
     structured_channel_prune,
+    structured_vit_head_prune,
     summarize_sparsity,
 )
 from pruning_lab.train.train_loop import (
@@ -395,7 +396,11 @@ def handle_prune(args: argparse.Namespace) -> None:
             include_norm=args.include_norm,
         )
     else:
-        summary = structured_channel_prune(model, amount=args.amount)
+        # For ViT models, prefer attention-head structured pruning.
+        if args.model.startswith("vit_tiny"):
+            summary = structured_vit_head_prune(model, amount=args.amount)
+        else:
+            summary = structured_channel_prune(model, amount=args.amount)
 
     apply_masks(model, summary.masks)
 

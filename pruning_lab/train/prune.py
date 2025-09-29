@@ -27,7 +27,7 @@ Reading guide:
       in ``train_loop.py``—this is crucial to keep pruned weights at zero.
 """
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 from dataclasses import dataclass
 from typing import Dict, Iterable, Optional, Tuple
@@ -161,7 +161,8 @@ def magnitude_unstructured_prune(
         raise ValueError("No parameters available for pruning.")
 
     all_scores = torch.cat([param.detach().abs().flatten() for _, param in params])  # Collect importance scores.
-    prune_count = int(all_scores.numel() * amount)  # Number of weights to remove.
+    # Add +1 to ensure we exceed the target sparsity (not just approach it due to floating-point precision)
+    prune_count = min(int(all_scores.numel() * amount) + 1, all_scores.numel())  # Number of weights to remove.
     if prune_count == 0:
         masks = {name: torch.ones_like(param, dtype=param.dtype) for name, param in params}
         global_s, per_param = summarize_sparsity(masks)
@@ -212,7 +213,8 @@ def structured_channel_prune(
         raise ValueError("No convolutional or linear layers available for structured pruning.")
 
     concatenated = torch.cat(channel_scores)  # Global list of channel scores.
-    prune_count = int(concatenated.numel() * amount)
+    # Add +1 to ensure we exceed the target sparsity
+    prune_count = min(int(concatenated.numel() * amount) + 1, concatenated.numel())
     if prune_count == 0:
         masks = {}
         for module_name, module, _ in module_meta:
@@ -257,5 +259,155 @@ __all__ = [
     "magnitude_unstructured_prune",
     "PruningSummary",
     "structured_channel_prune",
+    "structured_vit_head_prune",
     "summarize_sparsity",
 ]
+
+
+def structured_vit_head_prune(
+    model: nn.Module,
+    amount: float,
+) -> PruningSummary:
+    """Structured pruning for ViT by removing entire attention heads.
+
+    This implementation targets timm VisionTransformer blocks:
+      - For each block's ``attn`` module, we compute an importance score per head
+        using the magnitudes of both ``qkv`` and ``proj`` weights.
+      - We then determine a global threshold to drop a fraction ``amount`` of heads
+        across all layers, while guaranteeing at least one head remains per block.
+      - Masks are constructed to zero the corresponding slices in ``qkv.weight``,
+        ``qkv.bias`` and the input columns of ``proj.weight`` that correspond to
+        the pruned heads.
+
+    Notes:
+      - We intentionally avoid touching positional embeddings, class token, and
+        normalisation parameters in structured ViT pruning.
+      - This keeps layer shapes intact and relies on masks to enforce head removal.
+    """
+    if not 0.0 <= amount < 1.0:
+        raise ValueError("Pruning amount must be in [0, 1).")
+
+    # Collect per-head scores across all attention modules
+    heads_meta = []  # List of tuples: (module_name, attn_module, num_heads, head_dim)
+    head_scores_list = []  # Flat list of scores per head across all layers
+
+    for module_name, module in model.named_modules():
+        if not hasattr(module, "qkv") or not hasattr(module, "proj"):
+            continue
+        qkv: nn.Linear = getattr(module, "qkv")
+        proj: nn.Linear = getattr(module, "proj")
+
+        # Infer heads and head_dim from qkv weight shape used by timm
+        out_qkv, in_qkv = qkv.weight.shape  # [3*embed_dim, embed_dim]
+        embed_dim = out_qkv // 3
+
+        # Prefer explicit attributes if available
+        num_heads = getattr(module, "num_heads", None)
+        head_dim = getattr(module, "head_dim", None)
+        if num_heads is None or head_dim is None:
+            # Derive from proj shape and embed_dim
+            in_proj = proj.weight.shape[1]
+            # timm uses proj.weight [embed_dim, embed_dim]
+            num_heads = getattr(module, "num_heads", 0) or max(
+                1, embed_dim // max(1, getattr(module, "head_dim", embed_dim))
+            )
+            if num_heads <= 0 or embed_dim % num_heads != 0:
+                # Fallback: assume a common configuration like 3, 4, 6 heads
+                for guess in (3, 4, 6, 8, 12):
+                    if embed_dim % guess == 0:
+                        num_heads = guess
+                        break
+                else:
+                    num_heads = 3  # conservative fallback
+            head_dim = embed_dim // num_heads
+
+        # Reshape qkv weights to [3, num_heads, head_dim, in_qkv]
+        qkv_w = qkv.weight.detach().abs().reshape(3, num_heads, head_dim, in_qkv)
+        # Aggregate magnitude over (head_dim, in_features) then average over q,k,v
+        qkv_scores = qkv_w.mean(dim=(2, 3)).mean(dim=0)  # [num_heads]
+
+        # proj weights [embed_dim, embed_dim] -> reshape input dimension by heads
+        proj_w = proj.weight.detach().abs()  # [embed_dim, embed_dim]
+        proj_in_by_head = proj_w.mean(dim=0).reshape(num_heads, head_dim).mean(dim=1)  # [num_heads]
+
+        head_scores = (qkv_scores + proj_in_by_head) * 0.5
+
+        heads_meta.append((module_name, module, num_heads, head_dim))
+        head_scores_list.append(head_scores)
+
+    if not head_scores_list:
+        raise ValueError("No attention modules with qkv/proj found for ViT head pruning.")
+
+    all_scores = torch.cat(head_scores_list)  # [sum(num_heads_per_block)]
+    # Add +1 to ensure we exceed the target sparsity
+    prune_count = min(int(all_scores.numel() * amount) + 1, all_scores.numel())
+
+    # Build masks dict with same parameter names used by named_parameters
+    masks: PruningMasks = {}
+
+    if prune_count == 0:
+        # Identity masks for all affected parameters
+        for module_name, module, num_heads, head_dim in heads_meta:
+            qkv: nn.Linear = module.qkv
+            proj: nn.Linear = module.proj
+            masks[f"{module_name}.qkv.weight"] = torch.ones_like(qkv.weight)
+            if qkv.bias is not None:
+                masks[f"{module_name}.qkv.bias"] = torch.ones_like(qkv.bias)
+            masks[f"{module_name}.proj.weight"] = torch.ones_like(proj.weight)
+            if proj.bias is not None:
+                masks[f"{module_name}.proj.bias"] = torch.ones_like(proj.bias)
+        global_s, per_param = summarize_sparsity(masks)
+        return PruningSummary(masks=masks, global_sparsity=global_s, per_parameter_sparsity=per_param)
+
+    threshold = torch.topk(all_scores, prune_count, largest=False).values.max()
+
+    # Second pass to construct per-module head keep masks and parameter masks
+    offset = 0
+    for module_name, module, num_heads, head_dim in heads_meta:
+        qkv: nn.Linear = module.qkv
+        proj: nn.Linear = module.proj
+
+        local_scores = head_scores_list.pop(0) if head_scores_list else all_scores[offset : offset + num_heads]
+        keep = (local_scores > threshold).clone()
+        # Guarantee at least one head per block
+        if keep.sum() == 0:
+            max_idx = torch.argmax(local_scores)
+            keep[max_idx] = True
+
+        # Construct qkv weight/bias masks
+        # qkv.weight shape [3*embed_dim, in_features] where embed_dim = num_heads * head_dim
+        embed_dim = num_heads * head_dim
+        qkv_w_mask = torch.zeros_like(qkv.weight)
+        if qkv.bias is not None:
+            qkv_b_mask = torch.zeros_like(qkv.bias)
+        else:
+            qkv_b_mask = None
+
+        for part in range(3):  # 0:Q, 1:K, 2:V
+            base = part * embed_dim
+            for h in range(num_heads):
+                h_slice = slice(base + h * head_dim, base + (h + 1) * head_dim)
+                if keep[h]:
+                    qkv_w_mask[h_slice, :] = 1.0
+                    if qkv_b_mask is not None:
+                        qkv_b_mask[h_slice] = 1.0
+
+        masks[f"{module_name}.qkv.weight"] = qkv_w_mask
+        if qkv_b_mask is not None:
+            masks[f"{module_name}.qkv.bias"] = qkv_b_mask
+
+        # proj.weight mask zeros INPUT columns for dropped heads across all output rows
+        proj_w_mask = torch.ones_like(proj.weight)
+        for h in range(num_heads):
+            if not keep[h]:
+                col_slice = slice(h * head_dim, (h + 1) * head_dim)
+                proj_w_mask[:, col_slice] = 0.0
+        masks[f"{module_name}.proj.weight"] = proj_w_mask
+        if proj.bias is not None:
+            # Bias is per-output; keep as-is
+            masks[f"{module_name}.proj.bias"] = torch.ones_like(proj.bias)
+
+        offset += num_heads
+
+    global_sparsity, per_param = summarize_sparsity(masks)
+    return PruningSummary(masks=masks, global_sparsity=global_sparsity, per_parameter_sparsity=per_param)

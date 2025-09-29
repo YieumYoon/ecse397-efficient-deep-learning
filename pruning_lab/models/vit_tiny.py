@@ -26,7 +26,7 @@ Learning tip:
     heads.
 """
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 from typing import Optional
 

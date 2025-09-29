@@ -24,7 +24,7 @@ Learning tip:
     batch norms live will help later when you analyse pruning masks.
 """
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 import torch  # Provides tensor operations and autograd.
 from torch import nn  # Neural network modules and layers.

@@ -3,7 +3,7 @@
 #SBATCH --mem=16g
 #SBATCH -p markov_gpu
 #SBATCH --gres=gpu:1
-#SBATCH --time=0-08:00:00
+#SBATCH --time=0-12:00:00
 #SBATCH --job-name=resnet18
 #SBATCH --output=%x-%j.out
 
@@ -41,16 +41,52 @@ DATA_DIR="$TMP_BASE/data"
 mkdir -p "$DATA_DIR"
 OUT_DIR="runs/${SLURM_JOB_NAME}-${SLURM_JOB_ID}"
 
-python -u -m pruning_lab.main train \
-  --model resnet18 \
-  --epochs 200 \
-  --batch-size 128 \
-  --optimizer sgd \
-  --lr 0.1 \
-  --scheduler multistep \
-  --milestones 150 225 \
-  --gamma 0.1 \
-  --data-dir "$DATA_DIR" \
+# Hyperparameters via environment overrides
+EPOCHS=${EPOCHS:-300}
+BATCH_SIZE=${BATCH_SIZE:-256}
+LR=${LR:-0.01}
+OPTIMIZER=${OPTIMIZER:-sgd}
+SCHEDULER=${SCHEDULER:-cosine}
+MILESTONES=${MILESTONES:-"150 225"}
+GAMMA=${GAMMA:-0.1}
+T_MAX=${T_MAX:-$EPOCHS}
+PRETRAINED=${PRETRAINED:-1}
+AMP=${AMP:-1}
+SEED=${SEED:-}
+WEIGHT_DECAY=${WEIGHT_DECAY:-0.0005}
+MOMENTUM=${MOMENTUM:-0.9}
+
+ARGS=(
+  -u -m pruning_lab.main train
+  --model resnet18
+  --epochs "$EPOCHS"
+  --batch-size "$BATCH_SIZE"
+  --optimizer "$OPTIMIZER"
+  --lr "$LR"
+  --scheduler "$SCHEDULER"
+  --weight-decay "$WEIGHT_DECAY"
+  --momentum "$MOMENTUM"
+  --data-dir "$DATA_DIR"
   --output-dir "$OUT_DIR"
+)
+
+if [ "$SCHEDULER" = "multistep" ]; then
+  # shellcheck disable=SC2086
+  ARGS+=( --milestones $MILESTONES --gamma "$GAMMA" )
+fi
+if [ "$SCHEDULER" = "cosine" ]; then
+  ARGS+=( --t-max "$T_MAX" )
+fi
+if [ "$PRETRAINED" = "1" ]; then
+  ARGS+=( --pretrained )
+fi
+if [ "$AMP" = "1" ]; then
+  ARGS+=( --amp )
+fi
+if [ -n "$SEED" ]; then
+  ARGS+=( --seed "$SEED" )
+fi
+
+python "${ARGS[@]}"
 
 
