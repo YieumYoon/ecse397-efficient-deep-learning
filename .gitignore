@@ -27,9 +27,10 @@ logs/
 runs/
 archive/
 
-# Downloaded/generated data
+# Downloaded/generated data (datasets now go to $TMPDIR in SLURM jobs)
 pruning_lab/data/cifar-10-batches-py/
 pruning_lab/data/cifar-10-python.tar.gz
+data/
 
 # Packaging
 *.zip
@@ -37,7 +38,7 @@ pruning_lab/data/cifar-10-python.tar.gz
 # Docs and misc
 *.pdf
 
-# Modles 
+# Models
 pruning_lab/models_saved/
 
 # Job status

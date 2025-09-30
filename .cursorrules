@@ -163,7 +163,7 @@ sbatch -C $GPU_TYPE <script.slurm>
 4. `gpu4070` - RTX 4070 (good, 1 node)
 5. `gpu2080` - RTX 2080 Ti (most available, 14+ nodes)
 
-See `GPU_SELECTION_GUIDE.md` for detailed information.
+See `CLUSTER_DOCUMENTATION.md` for detailed information.
 
 ## Monitoring Jobs
 - Check job status: `squeue -u $USER`

@@ -126,8 +126,6 @@ Both models are trained and evaluated on the **CIFAR-10** dataset, with the goal
 
 All lab requirements have been successfully implemented and tested. The codebase is HPC-compatible and has been executed on the Markov cluster.
 
-**📊 Full Audit Completed:** See [LAB_AUDIT_REPORT.md](LAB_AUDIT_REPORT.md) for comprehensive compliance verification.
-
 #### Implemented Components
 
 | Component | Status | Details |
@@ -205,16 +203,13 @@ All lab requirements have been successfully implemented and tested. The codebase
 ```
 ecse397-efficient-deep-learning/
 │
-├── LAB_AUDIT_REPORT.md             # 📊 Comprehensive compliance audit (NEW)
-│
 ├── pruning_lab/                    # Main submission folder
 │   ├── __init__.py
 │   ├── main.py                     # CLI entry point
 │   ├── report.json                 # Final metrics report
 │   │
 │   ├── data/                       # Data loading
-│   │   ├── dataloader.py           # CIFAR-10 loaders with augmentations
-│   │   └── cifar-10-batches-py/    # Downloaded CIFAR-10 data
+│   │   └── dataloader.py           # CIFAR-10 loaders with augmentations
 │   │
 │   ├── models/                     # Model architectures
 │   │   ├── resnet18.py             # ResNet-18 implementation
@@ -227,44 +222,25 @@ ecse397-efficient-deep-learning/
 │   ├── inference/                  # Evaluation
 │   │   └── test.py                 # Model evaluation utilities
 │   │
-│   └── models_saved/               # Model checkpoints
-│       ├── cnn_before_pruning.pth
-│       ├── cnn_after_unstructured_pruning.pth
-│       ├── cnn_after_structured_pruning.pth
-│       ├── vit_before_pruning.pth
-│       ├── vit_after_unstructured_pruning.pth
-│       └── vit_after_structured_pruning.pth
+│   └── models_saved/               # Model checkpoints (ignored by git)
 │
-├── scripts/                        # HPC job scripts
-│   ├── train_resnet18_any_gpu.slurm
-│   ├── train_vit_pretrained_any_gpu.slurm
-│   ├── train_vit_any_gpu.slurm
-│   ├── prune_any_gpu.slurm
-│   ├── update_report.py            # Report generation script
-│   └── submit_jobs.py              # Job submission utility
+├── scripts/                        # HPC job scripts (corrected)
+│   ├── train_cnn.slurm
+│   ├── train_vit.slurm
+│   ├── prune_cnn.slurm
+│   ├── prune_vit.slurm
+│   ├── test_cluster_setup.slurm
+│   ├── select_best_gpu.sh
+│   └── submit_best_gpu.sh
 │
-├── runs/                           # Training logs and checkpoints
+├── logs/                           # Job logs (ignored by git)
 │
 ├── requirements.txt                # Python dependencies
 ├── setup_python_env.sh             # HPC environment setup
 ├── Lab-1-2.md                      # Assignment handout
-├── LAB_AUDIT_REPORT.md             # 📊 Comprehensive audit report
-├── SETUP.md                        # Setup instructions
+├── CLUSTER_DOCUMENTATION.md        # Comprehensive Markov cluster guide
 └── README.md                       # This file
 ```
-
-### 📊 New: Lab Audit Report
-
-A comprehensive **LAB_AUDIT_REPORT.md** has been generated that:
-- ✅ Verifies all assignment requirements from Lab-1-2.md
-- ✅ Validates directory structure and file organization
-- ✅ Reviews code quality and implementation correctness
-- ✅ Confirms custom pruning implementation (no torch.nn.utils.prune)
-- ✅ Checks report.json format compliance
-- ✅ Validates all model checkpoints
-- ✅ Provides compliance matrix and final assessment
-
-**Result:** All requirements met, ready for submission.
 
 ---
 
@@ -290,35 +266,30 @@ pip install -r requirements.txt
 python3 -m pruning_lab.main --help
 ```
 
-### HPC (Markov Cluster) Setup
-
-#### One-Time Setup
+### HPC (Markov Cluster) Quickstart
 
 ```bash
-# SSH to cluster
+# SSH to cluster (VPN if off-campus)
 ssh markov.case.edu
-# or use OnDemand: https://ondemand-markov.case.edu
 
 # Navigate to project
 cd /home/jxl2244/ecse397-efficient-deep-learning
 
-# Run setup script
-bash setup_python_env.sh
+# Submit to the best available GPU automatically
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# Quick test (1 epoch)
+EPOCHS=1 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# Verify setup
+sbatch scripts/test_cluster_setup.slurm
 ```
 
-This script:
-- Loads PyTorch 2.1.2 with CUDA 12.1 from HPC modules
-- Installs `timm` library to user directory (~6MB)
-- Verifies installation
-
-#### Dependencies
-
-All dependencies are managed through the HPC module system:
-
-- **Python**: 3.11.5 (from PyTorch-bundle module)
-- **PyTorch**: 2.1.2 with CUDA 12.1
-- **torchvision**: 0.16.2
-- **timm**: 1.0.20 (installed via pip)
+Notes:
+- Jobs run in job-local scratch: `cd "$TMPDIR"` inside scripts
+- `$TMPDIR` is auto-cleaned by SLURM; results are copied back to home
+- To target a specific GPU: `sbatch -C gpu2h100 scripts/train_cnn.slurm`
+- See `CLUSTER_DOCUMENTATION.md` for full details
 
 ---
 

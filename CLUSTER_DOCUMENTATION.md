@@ -291,3 +291,120 @@ When creating or reviewing SLURM scripts:
 **Last Updated**: September 30, 2025  
 **Verified Against**: Official CWRU HPC Documentation  
 **Cluster**: markov.case.edu
+
+---
+
+## GPU Usage and Selection (Comprehensive)
+
+### Available GPUs (Performance Ranking)
+
+| GPU Type | Model | VRAM | Nodes | Performance | Best For |
+|----------|-------|------|-------|-------------|----------|
+| `gpu2h100` | NVIDIA H100 | ~80GB | 2 | ⭐⭐⭐⭐⭐ Best | Large models, fastest training |
+| `gpu4090` | NVIDIA RTX 4090 | 24GB | 1 | ⭐⭐⭐⭐ Excellent | High-performance training |
+| `gpul40s` | NVIDIA L40S | 48GB | 2 | ⭐⭐⭐⭐ Excellent | Large batches, good VRAM |
+| `gpu4070` | NVIDIA RTX 4070 | 12GB | 1 | ⭐⭐⭐ Good | Standard training |
+| `gpu2080` | RTX 2080 Ti | 11GB | 14+ | ⭐⭐⭐ Good | Most available, reliable |
+
+### Check Availability
+
+```bash
+si                             # Show all GPU nodes and status
+si | grep markov_gpu           # Filter GPU partition
+si | grep -E "idle|mix"         # Focus on usable nodes
+```
+
+Interpreting columns: STATE = idle (best), mix (ok), alloc/down/drain (unusable). CPUS(A/I/O/T) shows allocated/idle CPU cores.
+
+### Automatic GPU Selection (Recommended)
+
+```bash
+# Submit with auto-selected best GPU (H100 > 4090 > L40S > 4070 > 2080)
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# With environment variables
+EPOCHS=100 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+```
+
+Under the hood, `scripts/select_best_gpu.sh` parses `si` output and returns the best available GPU feature. The wrapper adds `-C <feature>` to `sbatch`.
+
+### Manual GPU Selection
+
+```bash
+# Request specific GPU type
+sbatch -C gpu2h100 scripts/train_cnn.slurm   # H100 (fastest)
+sbatch -C gpu4090  scripts/train_cnn.slurm   # RTX 4090
+sbatch -C gpu2080  scripts/train_cnn.slurm   # RTX 2080 Ti (most available)
+```
+
+Add a constraint directly in a `.slurm` script:
+
+```bash
+#SBATCH -C gpu2h100   # or gpu4090, gpul40s, gpu4070, gpu2080
+```
+
+### Usage Examples
+
+```bash
+# 1) Auto-select best GPU
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# 2) Check then submit
+GPU=$(bash scripts/select_best_gpu.sh)
+sbatch -C "$GPU" scripts/train_cnn.slurm
+
+# 3) Try H100, fallback to 2080 Ti
+sbatch -C gpu2h100 scripts/train_cnn.slurm || sbatch -C gpu2080 scripts/train_cnn.slurm
+```
+
+### Tips
+
+```bash
+# Helpful aliases (put in ~/.bashrc)
+alias gpu_status='si | grep markov_gpu | grep -E "idle|mix"'
+alias gpu_h100='si | grep gpu2h100'
+alias gpubest='bash ~/ecse397-efficient-deep-learning/scripts/select_best_gpu.sh'
+```
+
+---
+
+## Quick Reference (One Page)
+
+### Submit Jobs
+
+```bash
+# Auto-select best GPU (recommended)
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# Manual GPU choice
+sbatch -C gpu2h100 scripts/train_cnn.slurm
+sbatch -C gpu2080  scripts/train_cnn.slurm
+```
+
+### Monitor and Logs
+
+```bash
+squeue -u $USER
+scontrol show job <job_id>
+
+# Live logs
+tail -f logs/train_cnn_*.out
+```
+
+### Common Workflows
+
+```bash
+# Quick test (1 epoch)
+EPOCHS=1 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# Pruning
+PRUNE_TYPE=unstructured AMOUNT=0.7 \
+  bash scripts/submit_best_gpu.sh scripts/prune_cnn.slurm
+```
+
+### Scratch Space Reminder
+
+```bash
+# In SLURM jobs, use job-local scratch
+cd "$TMPDIR"   # auto-created, auto-cleaned
+```
