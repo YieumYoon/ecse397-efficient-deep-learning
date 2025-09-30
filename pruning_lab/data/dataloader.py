@@ -40,6 +40,7 @@ Learning goal:
 """
 
 from pathlib import Path  # Handles filesystem paths in an OS-agnostic way.
+import os  # Access SLURM/TMPDIR environment variables when running on the cluster.
 from typing import Tuple, Optional, Union
 
 from torch.utils.data import DataLoader  # Batches dataset samples for training.
@@ -143,9 +144,15 @@ def get_loaders(
     """
 
     if data_dir is None:
-        # Default location lives inside the repository so the lab stays
-        # self-contained across different machines.
-        data_dir = Path(__file__).resolve().parent
+        # Prefer job-local scratch space when available (on Markov via SLURM),
+        # otherwise fall back to a repository-local directory.
+        tmpdir = os.environ.get("TMPDIR")
+        if tmpdir:
+            # Keep dataset under TMPDIR so downloads and I/O stay on fast scratch.
+            data_dir = Path(tmpdir) / "data" / "cifar10"
+        else:
+            # Repository-local default keeps things self-contained on non-cluster runs.
+            data_dir = Path(__file__).resolve().parent
     else:
         data_dir = Path(data_dir)
 
