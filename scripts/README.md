@@ -19,10 +19,9 @@ The original scripts had several critical violations of HPC guidelines:
 ### ✅ Corrected Scripts (`scripts_corrected/`)
 These scripts follow all official guidelines:
 
-1. **Use scratch space** (`/mnt/fs1` for Markov GPU nodes)
+1. **Use scratch space** (`$TMPDIR` for Markov jobs; `$PFSDIR` optional alternative)
    ```bash
-   WORK_DIR="/mnt/fs1/$USER/job_$SLURM_JOB_ID"
-   mkdir -p "$WORK_DIR"
+   WORK_DIR="$TMPDIR"
    cd "$WORK_DIR"
    ```
 
@@ -57,7 +56,7 @@ These scripts follow all official guidelines:
 - **PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1** ✓ Available and working
 
 ### Scratch Space
-- **Markov GPU nodes**: `/mnt/fs1`
+- **Markov GPU nodes**: `$TMPDIR` (auto-provided per job by SLURM)
 - **Other nodes**: `$TMPDIR` or `$PFSDIR` (only available in job context)
 
 ## How to Use These Scripts

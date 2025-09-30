@@ -19,7 +19,7 @@ This document summarizes the cluster verification and best practices based on of
 |-----------|--------|---------|
 | **Partitions** | ✓ Verified | `markov_cpu*` (default), `markov_gpu` |
 | **PyTorch Module** | ✓ Available | `PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1` |
-| **Scratch Space** | ✓ Accessible | `/mnt/fs1` for Markov GPU nodes |
+| **Scratch Space** | ✓ Accessible | `$TMPDIR` for jobs (`/tmp/job.JOBID.markov2`), `$PFSDIR` alternative |
 | **GPU Nodes** | ✓ Available | Multiple nodes (classt01-classt25) |
 | **Module System** | ✓ Working | `module purge` and `module load` functional |
 
@@ -48,9 +48,8 @@ python train.py  # Running in home directory - DON'T DO THIS!
 
 **CORRECT (follows official guidelines):**
 ```bash
-# Create unique work directory in scratch
-WORK_DIR="/mnt/fs1/$USER/job_$SLURM_JOB_ID"
-mkdir -p "$WORK_DIR"
+# Use job-local scratch space (automatically provided by SLURM)
+WORK_DIR="$TMPDIR"
 cd "$WORK_DIR"
 
 # Copy code to scratch
@@ -62,9 +61,8 @@ python train.py
 # Copy results back
 cp results/* $HOME/project/results/
 
-# Cleanup
-cd /mnt/fs1
-rm -rf "$WORK_DIR"
+# Cleanup: $TMPDIR is auto-cleaned by SLURM after the job ends
+echo "Job complete - TMPDIR will be auto-cleaned"
 ```
 
 ### Why Scratch Space Matters
@@ -78,7 +76,7 @@ rm -rf "$WORK_DIR"
 
 ## Corrected Scripts Location
 
-All corrected scripts are in: **`scripts_corrected/`**
+All corrected scripts are in: **`scripts/`**
 
 ### Available Scripts
 
@@ -92,11 +90,11 @@ All corrected scripts are in: **`scripts_corrected/`**
 
 ### Key Improvements in Corrected Scripts
 
-1. ✅ Use `/mnt/fs1` scratch space
-2. ✅ Create unique work directories per job
+1. ✅ Use `$TMPDIR` job-local scratch space (unique per job)
+2. ✅ No manual scratch directory management needed
 3. ✅ Copy code to scratch before running
 4. ✅ Copy results back to home before cleanup
-5. ✅ Clean up scratch space after completion
+5. ✅ No manual cleanup required ($TMPDIR auto-cleaned by SLURM)
 6. ✅ Proper module loading with `module purge`
 7. ✅ Error handling with `set -euo pipefail`
 8. ✅ Informative logging and status messages
@@ -109,7 +107,7 @@ All corrected scripts are in: **`scripts_corrected/`**
 
 ```bash
 # Submit test job
-sbatch scripts_corrected/test_cluster_setup.slurm
+sbatch scripts/test_cluster_setup.slurm
 
 # Check job status
 squeue -u $USER
@@ -132,7 +130,7 @@ The test verifies:
 
 ```bash
 # Test with 1 epoch only
-EPOCHS=1 sbatch scripts_corrected/train_cnn.slurm
+EPOCHS=1 sbatch scripts/train_cnn.slurm
 
 # Monitor progress
 tail -f logs/train_cnn_*.out
@@ -144,9 +142,8 @@ tail -f logs/train_cnn_*.out
 # Check that checkpoint was saved
 ls -lh pruning_lab/models_saved/
 
-# Verify scratch was cleaned
-# (should show no job directories for your user)
-ls /mnt/fs1/$USER/
+# Scratch space is job-local ($TMPDIR) and auto-cleaned by SLURM
+# Verify results instead of checking $TMPDIR from login node
 ```
 
 ---
@@ -155,20 +152,9 @@ ls /mnt/fs1/$USER/
 
 ### From Old Scripts to Corrected Scripts
 
-#### Option 1: Replace Scripts (Recommended)
-```bash
-# Backup old scripts
-mv scripts scripts_old_backup
-
-# Use corrected scripts
-mv scripts_corrected scripts
-```
-
-#### Option 2: Use Corrected Scripts Directly
-```bash
-# Just submit from corrected directory
-sbatch scripts_corrected/train_cnn.slurm
-```
+All scripts have already been consolidated into `scripts/`. If you had local
+copies of older scripts, prefer the versions in `scripts/` and archive or delete
+your local duplicates.
 
 ### Updating Custom Scripts
 
@@ -187,9 +173,8 @@ If you have custom scripts, update them using this template:
 
 set -euo pipefail
 
-# 1. Setup scratch space
-WORK_DIR="/mnt/fs1/$USER/job_$SLURM_JOB_ID"
-mkdir -p "$WORK_DIR"
+# 1. Use job-local scratch space
+WORK_DIR="$TMPDIR"
 cd "$WORK_DIR"
 
 # 2. Copy required files
@@ -206,9 +191,8 @@ python train.py
 # 5. Copy results back
 cp -r outputs $HOME/myproject/results/
 
-# 6. Cleanup
-cd /mnt/fs1
-rm -rf "$WORK_DIR"
+# 6. Cleanup: $TMPDIR is auto-cleaned by SLURM
+echo "TMPDIR will be auto-cleaned"
 ```
 
 ---
@@ -253,8 +237,8 @@ module avail PyTorch
 # Check disk quota
 quota -s
 
-# Check scratch space usage
-du -sh /mnt/fs1/$USER/
+# Inspect job-local scratch space from within a job
+# df -h "$TMPDIR"
 ```
 
 ---
@@ -262,7 +246,7 @@ du -sh /mnt/fs1/$USER/
 ## Additional Resources
 
 1. **`.cursorrules`**: Complete guidelines for AI coding assistants
-2. **`scripts_corrected/README.md`**: Detailed script documentation
+2. **`scripts/README.md`**: Detailed script documentation
 3. **Official HPC Docs**: Contact CWRU HPC support for latest documentation
 
 ---
@@ -271,7 +255,7 @@ du -sh /mnt/fs1/$USER/
 
 ### Job Fails with "Quota Exceeded"
 - **Cause**: Running in home directory instead of scratch
-- **Fix**: Use corrected scripts that use `/mnt/fs1`
+- **Fix**: Use `$TMPDIR` as job-local scratch (provided by SLURM)
 
 ### Job Fails with "Module not found"
 - **Cause**: Missing `module purge` or incorrect module name
@@ -282,8 +266,8 @@ du -sh /mnt/fs1/$USER/
 - **Fix**: Always copy results to home before `rm -rf $WORK_DIR`
 
 ### Scratch Space Full
-- **Cause**: Previous jobs didn't clean up
-- **Fix**: Manually clean `/mnt/fs1/$USER/` and ensure scripts have cleanup
+- **Cause**: Node-local scratch ($TMPDIR) capacity reached
+- **Fix**: Reduce dataset/temp footprint, shorten job, or try another time/node. Consider `$PFSDIR` if provided.
 
 ---
 
@@ -295,7 +279,7 @@ When creating or reviewing SLURM scripts:
 - [ ] Error handling: `set -euo pipefail`
 - [ ] Correct partition: `--partition=markov_gpu` for GPU jobs
 - [ ] GPU request: `--gres=gpu:1` if needed
-- [ ] Scratch space: `cd /mnt/fs1` and create unique work directory
+- [ ] Scratch space: `cd "$TMPDIR"` (auto-provided per job by SLURM)
 - [ ] Copy code: `cp -r $HOME/project .`
 - [ ] Load modules: `module purge` then `module load`
 - [ ] Copy results: `cp results $HOME/` before cleanup

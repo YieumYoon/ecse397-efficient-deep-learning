@@ -147,12 +147,12 @@ si  # Shows real-time GPU status
 
 **Automatic submission to best available GPU:**
 ```bash
-bash scripts_corrected/submit_best_gpu.sh <script.slurm>
+bash scripts/submit_best_gpu.sh <script.slurm>
 ```
 
 **Or get GPU type for manual use:**
 ```bash
-GPU_TYPE=$(bash scripts_corrected/select_best_gpu.sh)
+GPU_TYPE=$(bash scripts/select_best_gpu.sh)
 sbatch -C $GPU_TYPE <script.slurm>
 ```
 
@@ -210,7 +210,7 @@ Always include:
 ### Cluster Verification Test
 Run the verification script to test your setup:
 ```bash
-sbatch scripts_corrected/test_cluster_setup.slurm
+sbatch scripts/test_cluster_setup.slurm
 ```
 
 This tests:

@@ -44,7 +44,7 @@ python -u -m pruning_lab.main train ...
 set -euo pipefail
 
 # ✅ Use scratch space
-WORK_DIR="/mnt/fs1/$USER/job_$SLURM_JOB_ID"
+WORK_DIR="$TMPDIR"
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR"
 
@@ -63,8 +63,7 @@ python -u -m pruning_lab.main train ...
 cp -v models_saved/* $HOME/ecse397-efficient-deep-learning/pruning_lab/models_saved/
 
 # ✅ Cleanup scratch
-cd /mnt/fs1
-rm -rf "$WORK_DIR"
+echo "TMPDIR will be auto-cleaned by SLURM"
 ```
 
 **Benefits:**
@@ -82,7 +81,7 @@ rm -rf "$WORK_DIR"
 
 | Original | Corrected | Why Changed |
 |----------|-----------|-------------|
-| `cd /home/.../project` | `WORK_DIR="/mnt/fs1/$USER/job_$SLURM_JOB_ID"` | Use scratch space per HPC policy |
+| `cd /home/.../project` | `WORK_DIR="$TMPDIR"` | Use job-local scratch space ($TMPDIR) |
 | `source scripts/env.sh` | `module purge; module load PyTorch-bundle/...` | Explicit module management |
 | (none) | `cp -r $HOME/.../code .` | Copy code to scratch |
 
@@ -106,7 +105,7 @@ rm -rf "$WORK_DIR"
 
 ### I/O Speed (Approximate)
 
-| Operation | Home Directory | Scratch (`/mnt/fs1`) | Speedup |
+| Operation | Home Directory | Scratch ($TMPDIR) | Speedup |
 |-----------|----------------|----------------------|---------|
 | Write 1GB file | 30-60 sec | 2-5 sec | **10-20x** |
 | Read 1GB file | 30-60 sec | 2-5 sec | **10-20x** |
@@ -154,7 +153,7 @@ rm -rf "$WORK_DIR"
 cd /home/jxl2244/ecse397-efficient-deep-learning
 
 # If you see this - it's CORRECT:
-WORK_DIR="/mnt/fs1/$USER/job_$SLURM_JOB_ID"
+WORK_DIR="$TMPDIR"
 cd "$WORK_DIR"
 ```
 
@@ -168,7 +167,7 @@ ps aux | grep python  # Look at working directory
 ```
 
 If the working directory shows `/home/...` → WRONG  
-If it shows `/mnt/fs1/...` → CORRECT
+If it shows `$TMPDIR/...` → CORRECT
 
 ---
 
@@ -201,7 +200,7 @@ A: Check the error log. Common issues:
 - Module not found (check module name)
 
 **Q: Can I use these scripts on other clusters?**  
-A: The principles apply, but change `/mnt/fs1` to `$TMPDIR` or cluster-specific scratch space.
+A: The principles apply, but use `$TMPDIR` (job-local scratch) or cluster-specific scratch space.
 
 ---
 

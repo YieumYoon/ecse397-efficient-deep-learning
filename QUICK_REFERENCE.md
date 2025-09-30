@@ -14,21 +14,21 @@ si | grep idle                  # Show only idle nodes
 #### Auto-Select Best GPU (Recommended!)
 ```bash
 # Automatic GPU selection and submission
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 
 # With environment variables
-EPOCHS=100 bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+EPOCHS=100 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 #### Manual GPU Selection
 ```bash
 # Request specific GPU
-sbatch -C gpu2h100 scripts_corrected/train_cnn.slurm    # H100 (fastest)
-sbatch -C gpu4090 scripts_corrected/train_cnn.slurm     # RTX 4090
-sbatch -C gpu2080 scripts_corrected/train_cnn.slurm     # RTX 2080 Ti (most available)
+sbatch -C gpu2h100 scripts/train_cnn.slurm    # H100 (fastest)
+sbatch -C gpu4090 scripts/train_cnn.slurm     # RTX 4090
+sbatch -C gpu2080 scripts/train_cnn.slurm     # RTX 2080 Ti (most available)
 
 # Default (no GPU preference)
-sbatch scripts_corrected/train_cnn.slurm
+sbatch scripts/train_cnn.slurm
 ```
 
 ### Monitor Jobs
@@ -68,29 +68,29 @@ cat logs/train_cnn_12345.err    # View errors
 
 ### 1. Quick Test (1 epoch)
 ```bash
-EPOCHS=1 bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+EPOCHS=1 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 ### 2. Full Training
 ```bash
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 ### 3. Pruning
 ```bash
 # Unstructured pruning (70%)
 PRUNE_TYPE=unstructured AMOUNT=0.7 \
-  bash scripts_corrected/submit_best_gpu.sh scripts_corrected/prune_cnn.slurm
+  bash scripts/submit_best_gpu.sh scripts/prune_cnn.slurm
 
 # Structured pruning (50%)
 PRUNE_TYPE=structured AMOUNT=0.5 \
-  bash scripts_corrected/submit_best_gpu.sh scripts_corrected/prune_cnn.slurm
+  bash scripts/submit_best_gpu.sh scripts/prune_cnn.slurm
 ```
 
 ### 4. Custom Training Parameters
 ```bash
 EPOCHS=100 LR=0.05 BATCH_SIZE=256 \
-  bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+  bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 ---
@@ -118,7 +118,7 @@ scontrol show job <job_id> | grep Reason
 
 # Try different GPU if waiting too long
 scancel <job_id>
-sbatch -C gpu2080 scripts_corrected/train_cnn.slurm  # Most available
+sbatch -C gpu2080 scripts/train_cnn.slurm  # Most available
 ```
 
 ### Check Results
@@ -148,7 +148,7 @@ du -sh pruning_lab/            # Check directory size
 | `prune_vit.slurm` | Prune ViT-Tiny | 1 | 12h |
 | `test_cluster_setup.slurm` | Verify setup | 1 | 10m |
 
-All scripts in: `scripts_corrected/`
+All scripts in: `scripts/`
 
 ---
 
@@ -159,17 +159,17 @@ All scripts in: `scripts_corrected/`
 alias gpu='si | grep markov_gpu'
 alias myjobs='squeue -u $USER'
 alias logs='ls -lt logs/ | head -10'
-alias gpubest='bash ~/ecse397-efficient-deep-learning/scripts_corrected/select_best_gpu.sh'
+alias gpubest='bash ~/ecse397-efficient-deep-learning/scripts/select_best_gpu.sh'
 ```
 
 ### Quick Submit Function (Add to ~/.bashrc)
 ```bash
 qsub() {
-    bash ~/ecse397-efficient-deep-learning/scripts_corrected/submit_best_gpu.sh "$@"
+    bash ~/ecse397-efficient-deep-learning/scripts/submit_best_gpu.sh "$@"
 }
 ```
 
-Then use: `qsub scripts_corrected/train_cnn.slurm`
+Then use: `qsub scripts/train_cnn.slurm`
 
 ---
 
@@ -178,8 +178,8 @@ Then use: `qsub scripts_corrected/train_cnn.slurm`
 | Need | Command | File |
 |------|---------|------|
 | GPU info | `si` | - |
-| Best GPU | `bash scripts_corrected/select_best_gpu.sh` | - |
-| Submit auto | `bash scripts_corrected/submit_best_gpu.sh <script>` | - |
+| Best GPU | `bash scripts/select_best_gpu.sh` | - |
+| Submit auto | `bash scripts/submit_best_gpu.sh <script>` | - |
 | Job status | `squeue -u $USER` | - |
 | Full guide | - | `GPU_SELECTION_GUIDE.md` |
 | Setup info | - | `SETUP_VERIFIED.md` |
@@ -192,10 +192,10 @@ Then use: `qsub scripts_corrected/train_cnn.slurm`
 
 ```bash
 # Check GPU availability and submit in one go
-si && bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+si && bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 
 # Submit to best GPU if H100 available, otherwise wait
-si | grep -q "gpu2h100.*idle" && sbatch -C gpu2h100 scripts_corrected/train_cnn.slurm
+si | grep -q "gpu2h100.*idle" && sbatch -C gpu2h100 scripts/train_cnn.slurm
 
 # Check job progress
 watch -n 10 'squeue -u $USER && tail -20 logs/train_cnn_*.out 2>/dev/null'
@@ -208,7 +208,7 @@ cat $(ls -t logs/*.out | head -1)
 
 **TL;DR: Just run this:**
 ```bash
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 It automatically picks the best available GPU and submits your job! 🚀

@@ -60,10 +60,10 @@ The automatic selector chooses the best available GPU in this order:
 
 ```bash
 # Submit with auto-selected best GPU
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 
 # With custom parameters
-EPOCHS=100 bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+EPOCHS=100 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 **Output Example:**
@@ -74,7 +74,7 @@ Selected: gpu2h100
 Current GPU status:
 markov_gpu    gpu2h100    idle   0/72/0/72    classt[23-24]
 
-Submitting job: scripts_corrected/train_cnn.slurm
+Submitting job: scripts/train_cnn.slurm
 GPU constraint: -C gpu2h100
 ```
 
@@ -86,13 +86,13 @@ GPU constraint: -C gpu2h100
 
 ```bash
 # Request H100 (best, but limited to 2 nodes)
-sbatch -C gpu2h100 scripts_corrected/train_cnn.slurm
+sbatch -C gpu2h100 scripts/train_cnn.slurm
 
 # Request RTX 4090 (excellent performance)
-sbatch -C gpu4090 scripts_corrected/train_cnn.slurm
+sbatch -C gpu4090 scripts/train_cnn.slurm
 
 # Request RTX 2080 Ti (most available)
-sbatch -C gpu2080 scripts_corrected/train_cnn.slurm
+sbatch -C gpu2080 scripts/train_cnn.slurm
 ```
 
 ### Add Constraint to SLURM Script
@@ -166,7 +166,7 @@ Add this line to your `.slurm` file:
 ### Example 1: Auto-Select Best Available
 ```bash
 # Let the script choose the best GPU
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
 ```
 
 ### Example 2: Check Then Submit
@@ -175,17 +175,17 @@ bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
 si | grep markov_gpu | grep idle
 
 # Manually choose based on availability
-sbatch -C gpu2h100 scripts_corrected/train_cnn.slurm
+sbatch -C gpu2h100 scripts/train_cnn.slurm
 ```
 
 ### Example 3: Try Best, Fallback to Available
 ```bash
 # Try H100 first
-sbatch -C gpu2h100 scripts_corrected/train_cnn.slurm
+sbatch -C gpu2h100 scripts/train_cnn.slurm
 
 # If it's queued too long, cancel and use 2080 Ti
 scancel <job_id>
-sbatch -C gpu2080 scripts_corrected/train_cnn.slurm
+sbatch -C gpu2080 scripts/train_cnn.slurm
 ```
 
 ### Example 4: In the SLURM Script
@@ -206,19 +206,19 @@ sbatch -C gpu2080 scripts_corrected/train_cnn.slurm
 
 ### Option 1: Use Wrapper Script (Easiest)
 ```bash
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_cnn.slurm
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/train_vit.slurm
-bash scripts_corrected/submit_best_gpu.sh scripts_corrected/prune_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+bash scripts/submit_best_gpu.sh scripts/train_vit.slurm
+bash scripts/submit_best_gpu.sh scripts/prune_cnn.slurm
 ```
 
 ### Option 2: Manual Check and Submit
 ```bash
 # Check availability
-GPU_TYPE=$(bash scripts_corrected/select_best_gpu.sh)
+GPU_TYPE=$(bash scripts/select_best_gpu.sh)
 echo "Best GPU: $GPU_TYPE"
 
 # Submit with selected GPU
-sbatch -C $GPU_TYPE scripts_corrected/train_cnn.slurm
+sbatch -C $GPU_TYPE scripts/train_cnn.slurm
 ```
 
 ### Option 3: Add to Script Header
@@ -285,7 +285,7 @@ Run `si` to see current real-time status.
 # Add to ~/.bashrc or ~/.bash_profile
 alias gpu_status='si | grep markov_gpu | grep -E "idle|mix"'
 alias gpu_h100='si | grep gpu2h100'
-alias gpu_best='bash ~/ecse397-efficient-deep-learning/scripts_corrected/select_best_gpu.sh'
+alias gpu_best='bash ~/ecse397-efficient-deep-learning/scripts/select_best_gpu.sh'
 ```
 
 Then use:
@@ -306,7 +306,7 @@ gpu_best    # Get best available GPU
 si
 
 # Auto-submit to best GPU
-bash scripts_corrected/submit_best_gpu.sh <script.slurm>
+bash scripts/submit_best_gpu.sh <script.slurm>
 
 # Submit to specific GPU
 sbatch -C gpu2h100 <script.slurm>  # H100
@@ -314,7 +314,7 @@ sbatch -C gpu4090 <script.slurm>   # RTX 4090
 sbatch -C gpu2080 <script.slurm>   # RTX 2080 Ti
 
 # Get best GPU programmatically
-GPU=$(bash scripts_corrected/select_best_gpu.sh)
+GPU=$(bash scripts/select_best_gpu.sh)
 ```
 
 ### Decision Tree
@@ -332,7 +332,7 @@ Need reliable? → RTX 2080 Ti (14+ nodes, almost always available)
 ---
 
 **The automatic selector handles this for you!**  
-Just run: `bash scripts_corrected/submit_best_gpu.sh <your_script.slurm>`
+Just run: `bash scripts/submit_best_gpu.sh <your_script.slurm>`
 
 ---
 
