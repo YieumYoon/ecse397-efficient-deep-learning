@@ -72,3 +72,4 @@ cp -v models_saved/* $HOME/ecse397-efficient-deep-learning/pruning_lab/models_sa
 echo "Scratch space will be auto-cleaned by SLURM after job completion"
 
 echo "Job completed successfully!"
+

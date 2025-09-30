@@ -68,3 +68,4 @@ cp -v models_saved/vit_after_${PRUNE_TYPE}_pruning.pth $HOME/ecse397-efficient-d
 echo "Scratch space will be auto-cleaned by SLURM after job completion"
 
 echo "Job completed successfully!"
+
