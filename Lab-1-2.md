@@ -62,6 +62,7 @@ pruning_lab/
 +-- inference/
 | -- test.py # Evaluate pruned models
 |
++-- utils/ # incudes all the scripts
 |
 +-- main.py # Command-line entry point
 ```

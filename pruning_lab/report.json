@@ -1,29 +1,29 @@
 {
   " initial_accuracies ": {
-    " cnn_before_pruning ": 0.8686,
+    " cnn_before_pruning ": 0.8685,
     " vit_before_pruning ": 0.9638,
-    " vit_scratch_before_pruning ": 0
+    " vit_scratch_before_pruning ": 0.8299
   },
   " unstructured_pruning ": {
     " cnn ": {
-      " original_accuracy ": 0.8686,
-      " pruned_accuracy ": 0.8789,
+      " original_accuracy ": 0.8685,
+      " pruned_accuracy ": 0.879,
       " pruning_percentage ": 70.0
     },
     " vit ": {
       " original_accuracy ": 0.9638,
-      " pruned_accuracy ": 0.9594,
+      " pruned_accuracy ": 0.9603,
       " pruning_percentage ": 70.0
     },
     " vit_scratch ": {
-         " original_accuracy ": 0 ,
-         " pruned_accuracy ": 0 ,
-         " pruning_percentage ": 0
+         " original_accuracy ": 0.8299,
+         " pruned_accuracy ": 0.8042,
+         " pruning_percentage ": 70.0
     }
   },
   " structured_pruning ": {
     " cnn ": {
-      " original_accuracy ": 0.8686,
+      " original_accuracy ": 0.8685,
       " pruned_accuracy ": 0.8782,
       " pruning_percentage ": 43.33
     },
@@ -33,9 +33,9 @@
       " pruning_percentage ": 19.42
     },
     " vit_scratch ": {
-         " original_accuracy ": 0 ,
-         " pruned_accuracy ": 0 ,
-         " pruning_percentage ": 0
+         " original_accuracy ": 0.8299,
+         " pruned_accuracy ": 0.8196,
+         " pruning_percentage ": 22.19
     }
   }
 }
