@@ -22,7 +22,7 @@ echo "Node: $SLURMD_NODENAME"
 
 # Copy project code to scratch
 cp -r $HOME/ecse397-efficient-deep-learning/pruning_lab .
-cp -r $HOME/ecse397-efficient-deep-learning/scripts .
+cp -r $HOME/ecse397-efficient-deep-learning/pruning_lab/utils .
 
 # Copy checkpoint from home to scratch
 mkdir -p models_saved

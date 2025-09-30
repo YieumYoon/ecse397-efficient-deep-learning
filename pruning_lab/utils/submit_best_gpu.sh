@@ -8,8 +8,8 @@ if [ $# -lt 1 ]; then
     echo "Usage: $0 <script.slurm> [optional SLURM args]"
     echo ""
     echo "Examples:"
-    echo "  $0 scripts_corrected/train_cnn.slurm"
-    echo "  $0 scripts_corrected/train_vit.slurm --time=12:00:00"
+    echo "  $0 pruning_lab/utils/train_cnn.slurm"
+    echo "  $0 pruning_lab/utils/train_vit.slurm --time=12:00:00"
     echo ""
     exit 1
 fi
@@ -25,7 +25,9 @@ fi
 
 # Get best available GPU
 echo "Checking GPU availability..."
-GPU_TYPE=$(bash scripts/select_best_gpu.sh 2>&1)
+# Resolve this script's directory to call select_best_gpu.sh reliably
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GPU_TYPE=$(bash "$SCRIPT_DIR/select_best_gpu.sh" 2>&1)
 
 echo ""
 echo "Selected GPU type: $GPU_TYPE"

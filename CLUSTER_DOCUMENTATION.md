@@ -76,7 +76,7 @@ echo "Job complete - TMPDIR will be auto-cleaned"
 
 ## Corrected Scripts Location
 
-All corrected scripts are in: **`scripts/`**
+All corrected scripts are in: **`pruning_lab/utils/`**
 
 ### Available Scripts
 
@@ -107,7 +107,7 @@ All corrected scripts are in: **`scripts/`**
 
 ```bash
 # Submit test job
-sbatch scripts/test_cluster_setup.slurm
+sbatch pruning_lab/utils/test_cluster_setup.slurm
 
 # Check job status
 squeue -u $USER
@@ -130,7 +130,7 @@ The test verifies:
 
 ```bash
 # Test with 1 epoch only
-EPOCHS=1 sbatch scripts/train_cnn.slurm
+EPOCHS=1 sbatch pruning_lab/utils/train_cnn.slurm
 
 # Monitor progress
 tail -f logs/train_cnn_*.out
@@ -152,8 +152,8 @@ ls -lh pruning_lab/models_saved/
 
 ### From Old Scripts to Corrected Scripts
 
-All scripts have already been consolidated into `scripts/`. If you had local
-copies of older scripts, prefer the versions in `scripts/` and archive or delete
+All scripts have already been consolidated into `pruning_lab/utils/`. If you had local
+copies of older scripts, prefer the versions in `pruning_lab/utils/` and archive or delete
 your local duplicates.
 
 ### Updating Custom Scripts
@@ -246,7 +246,7 @@ quota -s
 ## Additional Resources
 
 1. **`.cursorrules`**: Complete guidelines for AI coding assistants
-2. **`scripts/README.md`**: Detailed script documentation
+2. **`pruning_lab/utils/README.md`**: Detailed script documentation
 3. **Official HPC Docs**: Contact CWRU HPC support for latest documentation
 
 ---
@@ -320,21 +320,21 @@ Interpreting columns: STATE = idle (best), mix (ok), alloc/down/drain (unusable)
 
 ```bash
 # Submit with auto-selected best GPU (H100 > 4090 > L40S > 4070 > 2080)
-bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 
 # With environment variables
-EPOCHS=100 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+EPOCHS=100 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 ```
 
-Under the hood, `scripts/select_best_gpu.sh` parses `si` output and returns the best available GPU feature. The wrapper adds `-C <feature>` to `sbatch`.
+Under the hood, `pruning_lab/utils/select_best_gpu.sh` parses `si` output and returns the best available GPU feature. The wrapper adds `-C <feature>` to `sbatch`.
 
 ### Manual GPU Selection
 
 ```bash
 # Request specific GPU type
-sbatch -C gpu2h100 scripts/train_cnn.slurm   # H100 (fastest)
-sbatch -C gpu4090  scripts/train_cnn.slurm   # RTX 4090
-sbatch -C gpu2080  scripts/train_cnn.slurm   # RTX 2080 Ti (most available)
+sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm   # H100 (fastest)
+sbatch -C gpu4090  pruning_lab/utils/train_cnn.slurm   # RTX 4090
+sbatch -C gpu2080  pruning_lab/utils/train_cnn.slurm   # RTX 2080 Ti (most available)
 ```
 
 Add a constraint directly in a `.slurm` script:
@@ -347,14 +347,14 @@ Add a constraint directly in a `.slurm` script:
 
 ```bash
 # 1) Auto-select best GPU
-bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 
 # 2) Check then submit
-GPU=$(bash scripts/select_best_gpu.sh)
-sbatch -C "$GPU" scripts/train_cnn.slurm
+GPU=$(bash pruning_lab/utils/select_best_gpu.sh)
+sbatch -C "$GPU" pruning_lab/utils/train_cnn.slurm
 
 # 3) Try H100, fallback to 2080 Ti
-sbatch -C gpu2h100 scripts/train_cnn.slurm || sbatch -C gpu2080 scripts/train_cnn.slurm
+sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm || sbatch -C gpu2080 pruning_lab/utils/train_cnn.slurm
 ```
 
 ### Tips
@@ -363,7 +363,7 @@ sbatch -C gpu2h100 scripts/train_cnn.slurm || sbatch -C gpu2080 scripts/train_cn
 # Helpful aliases (put in ~/.bashrc)
 alias gpu_status='si | grep markov_gpu | grep -E "idle|mix"'
 alias gpu_h100='si | grep gpu2h100'
-alias gpubest='bash ~/ecse397-efficient-deep-learning/scripts/select_best_gpu.sh'
+alias gpubest='bash ~/ecse397-efficient-deep-learning/pruning_lab/utils/select_best_gpu.sh'
 ```
 
 ---
@@ -374,11 +374,11 @@ alias gpubest='bash ~/ecse397-efficient-deep-learning/scripts/select_best_gpu.sh
 
 ```bash
 # Auto-select best GPU (recommended)
-bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 
 # Manual GPU choice
-sbatch -C gpu2h100 scripts/train_cnn.slurm
-sbatch -C gpu2080  scripts/train_cnn.slurm
+sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
+sbatch -C gpu2080  pruning_lab/utils/train_cnn.slurm
 ```
 
 ### Monitor and Logs
@@ -395,11 +395,11 @@ tail -f logs/train_cnn_*.out
 
 ```bash
 # Quick test (1 epoch)
-EPOCHS=1 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+EPOCHS=1 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 
 # Pruning
 PRUNE_TYPE=unstructured AMOUNT=0.7 \
-  bash scripts/submit_best_gpu.sh scripts/prune_cnn.slurm
+  bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/prune_cnn.slurm
 ```
 
 ### Scratch Space Reminder

@@ -13,6 +13,8 @@ ecse397-efficient-deep-learning/
 │   ├── __init__.py
 │   ├── main.py                     # CLI entry point
 │   ├── report.json                 # Final metrics report
+|   ├── Lab-1-2.md                  # Assignment handout
+|   ├── README.md                   # This file
 │   │
 │   ├── data/
 │   │   └── dataloader.py           # CIFAR-10 loaders with augmentations (uses $TMPDIR in jobs)
@@ -28,23 +30,22 @@ ecse397-efficient-deep-learning/
 │   ├── inference/
 │   │   └── test.py
 │   │
+|   ├── utils/                     # HPC job scripts
+│   |   ├── train_cnn.slurm
+│   |   ├── train_vit.slurm
+│   |   ├── prune_cnn.slurm
+│   |   ├── prune_vit.slurm
+│   |   ├── prune_vit_scratch.slurm
+│   |   ├── select_best_gpu.sh
+│   |   └── submit_best_gpu.sh
+│   │
+│   │
 │   └── models_saved/               # Model checkpoints
-│
-├── scripts/                        # Corrected HPC job scripts
-│   ├── train_cnn.slurm
-│   ├── train_vit.slurm
-│   ├── prune_cnn.slurm
-│   ├── prune_vit.slurm
-│   ├── prune_vit_scratch.slurm
-│   ├── select_best_gpu.sh
-│   └── submit_best_gpu.sh
 │
 ├── logs/                           # Job logs
 │
 ├── requirements.txt                # Python deps (local dev)
-├── Lab-1-2.md                      # Assignment handout
-├── CLUSTER_DOCUMENTATION.md        # Comprehensive Markov cluster guide
-└── README.md                       # This file
+└── CLUSTER_DOCUMENTATION.md        # Comprehensive Markov cluster guide
 ```
 
 ---
@@ -98,18 +99,18 @@ cd /home/jxl2244/ecse397-efficient-deep-learning
 si | grep markov_gpu
 
 # RECOMMENDED: Auto-select best GPU and submit training
-bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
-bash scripts/submit_best_gpu.sh scripts/train_vit.slurm
+bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
+bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_vit.slurm
 
 # Or manually request specific GPU type
-sbatch -C gpu2h100 scripts/train_cnn.slurm  # H100 (fastest)
-sbatch -C gpu4090 scripts/train_vit.slurm   # RTX 4090 (2nd fastest)
+sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm  # H100 (fastest)
+sbatch -C gpu4090 pruning_lab/utils/train_vit.slurm   # RTX 4090 (2nd fastest)
 
 # Quick test (1 epoch)
-EPOCHS=1 bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+EPOCHS=1 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 
-# Verify cluster setup
-sbatch scripts/test_cluster_setup.slurm
+# Verify cluster setup (if available)
+# sbatch pruning_lab/utils/test_cluster_setup.slurm
 ```
 
 ### ⚠️ GPU Selection Best Practices
@@ -118,13 +119,13 @@ sbatch scripts/test_cluster_setup.slurm
 
 ```bash
 # ✅ GOOD: Use GPU selection wrapper
-bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
 
 # ✅ GOOD: Request specific fast GPU
-sbatch -C gpu2h100 scripts/train_cnn.slurm
+sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 
 # ❌ BAD: Random GPU assignment (might get slow gpu2080)
-sbatch scripts/train_cnn.slurm
+sbatch pruning_lab/utils/train_cnn.slurm
 ```
 
 **GPU Performance Tiers:**
@@ -149,7 +150,7 @@ sacct -j <job_id> --format=NodeList    # Check node assignment
 - Scripts run in $TMPDIR (job-local scratch, auto-cleaned by SLURM)
 - SLURM scripts use `.venv` (PyTorch 2.5.1+cu121) and copy/activate it on the node
 - Full cluster details in `CLUSTER_DOCUMENTATION.md` and `.cursorrules`
-- GPU selection scripts: `scripts/select_best_gpu.sh`, `scripts/submit_best_gpu.sh`
+- GPU selection scripts: `pruning_lab/utils/select_best_gpu.sh`, `pruning_lab/utils/submit_best_gpu.sh`
 
 ---
 
@@ -263,4 +264,4 @@ See `pruning_lab/report.json` for metrics; checkpoints saved under `pruning_lab/
 ## Docs
 
 - Cluster guide: `CLUSTER_DOCUMENTATION.md`
-- SLURM scripts and helpers: `scripts/`
+- SLURM scripts and helpers: `pruning_lab/utils/`
