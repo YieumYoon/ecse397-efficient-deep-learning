@@ -140,28 +140,57 @@ When requesting GPU resources:
 - Optionally specify GPU type with `-C <feature>`
 
 ### Automatic Best GPU Selection
-Before submitting jobs, check GPU availability:
+
+⚠️ **CRITICAL: Always request specific GPU types to avoid slow nodes!**
+
+Without `-C` flag, SLURM assigns random available GPUs. You might get slow nodes like:
+- `classt13` (gpu2080) - slowest tier, ~2-3x slower than H100
+- Training that takes 1 hour on H100 could take 2-3 hours on gpu2080
+
+**RECOMMENDED: Use the automatic GPU selection wrapper:**
+```bash
+# Best practice - automatically selects fastest available GPU
+bash scripts/submit_best_gpu.sh scripts/train_cnn.slurm
+
+# Or manually specify best GPU
+sbatch -C gpu2h100 scripts/train_cnn.slurm  # Request H100 specifically
+sbatch -C gpu4090 scripts/train_vit.slurm   # Request 4090 if H100 busy
+```
+
+**Check GPU availability before submitting:**
 ```bash
 si  # Shows real-time GPU status
+# Look for "idle" nodes with gpu2h100, gpu4090, or gpul40s
 ```
 
-**Automatic submission to best available GPU:**
-```bash
-bash scripts/submit_best_gpu.sh <script.slurm>
-```
-
-**Or get GPU type for manual use:**
+**Get GPU type for manual use:**
 ```bash
 GPU_TYPE=$(bash scripts/select_best_gpu.sh)
 sbatch -C $GPU_TYPE <script.slurm>
 ```
 
-**GPU Selection Priority** (best to worst):
-1. `gpu2h100` - H100 (fastest, 2 nodes)
-2. `gpu4090` - RTX 4090 (excellent, 1 node)  
-3. `gpul40s` - L40S (good VRAM, 2 nodes)
-4. `gpu4070` - RTX 4070 (good, 1 node)
-5. `gpu2080` - RTX 2080 Ti (most available, 14+ nodes)
+**GPU Performance Comparison** (best to worst):
+
+| GPU Type | Nodes | Performance | When to Use |
+|----------|-------|-------------|-------------|
+| `gpu2h100` (H100) | classt[23-24] | ⚡ **FASTEST** | Always prefer for training |
+| `gpu4090` (RTX 4090) | classt25 | ⚡⚡ Excellent | If H100 busy |
+| `gpul40s` (L40S) | classt[21-22] | ⚡⚡⚡ Good | Large memory tasks |
+| `gpu4070` (RTX 4070) | classt06 | ⚡⚡⚡⚡ Decent | Light workloads |
+| `gpu2080` (RTX 2080 Ti) | classt[01-19]* | ⚡⚡⚡⚡⚡ Slowest | Avoid for training |
+
+*Most available (14+ nodes) but slowest - only use for testing or when nothing else available.
+
+**Real Performance Impact:**
+- ResNet-18 training: ~2 hours on H100 vs ~5 hours on gpu2080
+- ViT-Tiny training: ~1 hour on H100 vs ~3 hours on gpu2080
+- Inference/testing: Minimal difference, any GPU is fine
+
+**Example: Check which GPU your job got:**
+```bash
+sacct -j <job_id> --format=JobID,NodeList
+# If you got classt13-19, consider canceling and resubmitting with -C gpu2h100
+```
 
 See `CLUSTER_DOCUMENTATION.md` for detailed information.
 
@@ -177,6 +206,8 @@ See `CLUSTER_DOCUMENTATION.md` for detailed information.
 4. ❌ Forgetting to copy results back from scratch before job ends
 5. ❌ Not specifying resource requirements accurately
 6. ❌ Forgetting VPN when accessing from off-campus
+7. ❌ **Not requesting specific GPU types** - letting SLURM assign slow gpu2080 nodes
+8. ❌ **Submitting with just `--gres=gpu:1`** - use `bash scripts/submit_best_gpu.sh` instead
 
 ## Python Environment Best Practices
 - Create virtual environments in home directory

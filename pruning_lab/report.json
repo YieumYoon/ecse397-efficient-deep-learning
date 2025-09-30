@@ -1,7 +1,8 @@
 {
   " initial_accuracies ": {
     " cnn_before_pruning ": 0.8686,
-    " vit_before_pruning ": 0.9638
+    " vit_before_pruning ": 0.9638,
+    " vit_scratch_before_pruning ": 0
   },
   " unstructured_pruning ": {
     " cnn ": {
@@ -13,6 +14,11 @@
       " original_accuracy ": 0.9638,
       " pruned_accuracy ": 0.9594,
       " pruning_percentage ": 70.0
+    },
+    " vit_scratch ": {
+         " original_accuracy ": 0 ,
+         " pruned_accuracy ": 0 ,
+         " pruning_percentage ": 0
     }
   },
   " structured_pruning ": {
@@ -25,6 +31,11 @@
       " original_accuracy ": 0.9638,
       " pruned_accuracy ": 0.9585,
       " pruning_percentage ": 19.42
+    },
+    " vit_scratch ": {
+         " original_accuracy ": 0 ,
+         " pruned_accuracy ": 0 ,
+         " pruning_percentage ": 0
     }
   }
 }

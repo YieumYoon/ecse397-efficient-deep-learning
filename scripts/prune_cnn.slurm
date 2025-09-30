@@ -28,10 +28,16 @@ cp -r $HOME/ecse397-efficient-deep-learning/scripts .
 mkdir -p models_saved
 cp $HOME/ecse397-efficient-deep-learning/pruning_lab/models_saved/cnn_before_pruning.pth models_saved/
 
-# Load environment
+# Load environment - Python 3.11 and CUDA (NOT PyTorch module)
 module purge
-module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1
-export PATH=$HOME/.local/bin:$PATH
+module load Python/3.11.3-GCCcore-12.3.0
+module load CUDA/12.1.1
+
+# Copy virtual environment
+cp -r $HOME/ecse397-efficient-deep-learning/.venv .
+
+# Activate virtual environment with PyTorch 2.5.1
+source .venv/bin/activate
 
 echo "Python: $(python3 --version)"
 echo "PyTorch: $(python3 -c 'import torch; print(torch.__version__)')"

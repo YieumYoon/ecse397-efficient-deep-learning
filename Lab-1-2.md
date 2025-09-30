@@ -203,7 +203,8 @@ model = ViTForImageClassification.from_pretrained(
 - You must generate a report.json file that includes:
   - 1. Initial accuracies of the unpruned models:
     - Final test accuracy of the CNN (ResNet-18) before pruning.
-    - Final test accuracy of the ViT-Tiny before pruning.
+    - Final test accuracy of the ViT-Tiny (Pre-trained) before pruning.
+    - Final test accuracy of the ViT-Tiny (Scratch) before pruning.
   - 2. Results for both unstructured and structured (channel-wise) pruning:
     - Original model accuracy before pruning (same as initial accuracy for that model).
     - Final accuracy after pruning and fine-tuning.
@@ -215,7 +216,8 @@ Listing 1: Example format of the report.json file:
 {
     " initial_accuracies ": {
          " cnn_before_pruning ": 0.912 ,
-         " vit_before_pruning ": 0.927
+         " vit_before_pruning ": 0.927 ,
+         " vit_scratch_before_pruning ": 0.862
     } ,
     " unstructured_pruning ": {
          " cnn ": {
@@ -227,6 +229,11 @@ Listing 1: Example format of the report.json file:
               " original_accuracy ": 0.927 ,
               " pruned_accuracy ": 0.852 ,
               " pruning_percentage ": 92.0
+         } ,
+         " vit_scratch ": {
+              " original_accuracy ": 0.862 ,
+              " pruned_accuracy ": 0.815 ,
+              " pruning_percentage ": 91.0
          }
     } ,
     " structured_pruning ": {
@@ -239,6 +246,11 @@ Listing 1: Example format of the report.json file:
               " original_accuracy ": 0.927 ,
               " pruned_accuracy ": 0.872 ,
               " pruning_percentage ": 68.5
+         } ,
+         " vit_scratch ": {
+              " original_accuracy ": 0.862 ,
+              " pruned_accuracy ": 0.821 ,
+              " pruning_percentage ": 65.0
          }
     }
 }
@@ -261,21 +273,31 @@ pruning_lab/
 ```
 
 - Inside the models\_saved/ folder, include the model checkpoint (.pth) files for:
-  - 1. CNN (ResNet-18) before pruning.
-  - 2. ViT-Tiny before pruning.
-
-- 3. CNN and ViT-Tiny after structured pruning.
-- 4. CNN and ViT-Tiny after unstructured pruning.
+  - 1. CNN (ResNet-18) before pruning
+  - 2. ViT-Tiny (Pre-trained) before pruning
+  - 3. ViT-Tiny (Scratch) before pruning
+  - 4. CNN and both ViT models after structured pruning
+  - 5. CNN and both ViT models after unstructured pruning
 - Use the following naming convention for clarity:
 
 ```
+# CNN checkpoints (3 total)
 cnn_before_pruning.pth
-vit_before_pruning.pth
 cnn_after_structured_pruning.pth
 cnn_after_unstructured_pruning.pth
+
+# ViT-Tiny Pre-trained checkpoints (3 total)
+vit_before_pruning.pth
 vit_after_structured_pruning.pth
 vit_after_unstructured_pruning.pth
+
+# ViT-Tiny Scratch checkpoints (3 total)
+vit_scratch_before_pruning.pth
+vit_scratch_after_structured_pruning.pth
+vit_scratch_after_unstructured_pruning.pth
 ```
+
+**Total: 9 checkpoint files required**
 
 # 5 Submission Guidelines
 

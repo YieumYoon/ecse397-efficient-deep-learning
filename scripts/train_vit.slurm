@@ -23,14 +23,19 @@ echo "Node: $SLURMD_NODENAME"
 # Copy project code to scratch
 cp -r $HOME/ecse397-efficient-deep-learning/pruning_lab .
 cp -r $HOME/ecse397-efficient-deep-learning/scripts .
+cp -r $HOME/ecse397-efficient-deep-learning/.venv .
 
-# Load environment
+# Load environment - Python 3.11 and CUDA (NOT PyTorch module)
 module purge
-module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1
-export PATH=$HOME/.local/bin:$PATH
+module load Python/3.11.3-GCCcore-12.3.0
+module load CUDA/12.1.1
+
+# Activate virtual environment with PyTorch 2.5.1
+source .venv/bin/activate
 
 echo "Python: $(python3 --version)"
 echo "PyTorch: $(python3 -c 'import torch; print(torch.__version__)')"
+echo "CUDA available: $(python3 -c 'import torch; print(torch.cuda.is_available())')"
 
 # MODEL_TYPE: pretrained | scratch
 MODEL_TYPE=${MODEL_TYPE:-pretrained}
@@ -72,4 +77,3 @@ cp -v models_saved/* $HOME/ecse397-efficient-deep-learning/pruning_lab/models_sa
 echo "Scratch space will be auto-cleaned by SLURM after job completion"
 
 echo "Job completed successfully!"
-

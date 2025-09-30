@@ -25,7 +25,7 @@ fi
 
 # Get best available GPU
 echo "Checking GPU availability..."
-GPU_TYPE=$(bash scripts_corrected/select_best_gpu.sh 2>&1)
+GPU_TYPE=$(bash scripts/select_best_gpu.sh 2>&1)
 
 echo ""
 echo "Selected GPU type: $GPU_TYPE"
