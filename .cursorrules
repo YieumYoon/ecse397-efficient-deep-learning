@@ -1,0 +1,247 @@
+# CWRU Markov GPU Cluster Guidelines
+
+## Official Documentation Source
+These rules are based on official CWRU HPC documentation.
+DO NOT trust existing scripts in this repository as reference - they may not follow best practices.
+
+## Cluster Access
+- **Markov cluster hostname**: `markov.case.edu` (for coursework)
+- **Access methods**: OnDemand web portal, X2Go, or SSH terminals
+- **VPN Required**: Must use CWRU VPN when accessing from outside campus network
+- **Interactive session keep-alive**: Use `ssh -o ServerAliveInterval=60` to prevent disconnection
+
+## Critical Rules - Job Execution
+
+### DO NOT Run on Login Nodes
+NEVER run computational jobs directly on login nodes. Always use:
+- **Batch jobs**: `sbatch script.slurm`
+- **Interactive jobs**: `srun --x11 --pty bash`
+
+### Storage Location Requirements
+**CRITICAL**: Jobs MUST run on scratch space, NOT home directory:
+- **Markov GPU nodes**: Use `$TMPDIR` as scratch space (automatically set by SLURM)
+- **Alternative**: Use `$PFSDIR` as scratch space (also available)
+- **Do NOT use**: `/mnt/fs1` (permission denied)
+- Copy input data to scratch at job start
+- Copy results back to home before job ends
+- `$TMPDIR` is automatically cleaned up by SLURM after job completion
+
+## SLURM Job Submission
+
+### Partition Selection
+For Markov cluster coursework:
+- **CPU jobs**: Use `--partition=markov_cpu` (default partition)
+- **GPU jobs**: Use `--partition=markov_gpu` (verified available)
+- Other partitions: `batch`, `smp`, `gpu`
+- Use node features with `-C` flag if needed
+
+**Verified partitions on markov.case.edu:**
+- `markov_cpu*` (default, CPU-only nodes)
+- `markov_gpu` (GPU nodes with CUDA support)
+
+### Resource Requests in SLURM Scripts
+Required SBATCH directives:
+```bash
+#!/bin/bash
+#SBATCH --job-name=job_name
+#SBATCH --partition=gpu              # or batch, smp, markov_cpu
+#SBATCH --gres=gpu:1                 # if using GPU
+#SBATCH --cpus-per-task=N            # number of CPU cores
+#SBATCH --mem=XG                     # memory request
+#SBATCH --time=HH:MM:SS              # wall time limit
+#SBATCH --output=/path/to/output_%j.out
+#SBATCH --error=/path/to/error_%j.err
+```
+
+### Proper SLURM Script Structure
+```bash
+#!/bin/bash
+#SBATCH [directives here]
+
+# Error handling
+set -euo pipefail
+
+# Change to scratch space (REQUIRED)
+# $TMPDIR is automatically set by SLURM for each job
+WORK_DIR="$TMPDIR"
+cd "$WORK_DIR"
+
+echo "Working in: $WORK_DIR"
+
+# Copy input data to scratch
+cp -r $HOME/project/data .
+cp -r $HOME/project/src .
+
+# Load modules
+module purge
+module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1
+
+# Run computation
+[your commands here]
+
+# Copy results back to home directory (CRITICAL!)
+mkdir -p $HOME/project/results
+cp -r results/* $HOME/project/results/
+
+# Cleanup: TMPDIR is automatically cleaned by SLURM
+echo "Job complete - TMPDIR will be auto-cleaned"
+```
+
+## Good Citizenship Practices
+
+### Compilation
+- Limit parallel compilation: `make --jobs=4` (max 4 parallel processes)
+- Never use unlimited `make -j`
+
+### Directory Management
+- Keep separate directories for each job
+- Use job-specific output directories
+- Clean up temporary files after jobs complete
+
+### Interactive vs Batch Jobs
+- **Batch jobs** (recommended): More reliable, won't disconnect
+- **Interactive jobs**: May disconnect after hours, use for debugging only
+- For long-running work, always use batch submission
+
+## Module System
+- Load required modules in SLURM scripts
+- Example: `module load python/3.x cuda/11.x`
+- Check available modules with: `module avail`
+- **Verified PyTorch module**: `PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1`
+- Always use `module purge` before loading to ensure clean environment
+
+## GPU Usage and Selection
+
+### Checking GPU Availability
+Use the `si` command to check current GPU status:
+```bash
+si  # Shows all nodes with GPU types and availability
+```
+
+**Available GPU Types on markov_gpu partition:**
+- `gpu2h100` - NVIDIA H100 (best performance, 2 nodes)
+- `gpu4090` - NVIDIA RTX 4090 (excellent performance)
+- `gpul40s` - NVIDIA L40S (good performance)
+- `gpu2080` - NVIDIA RTX 2080 Ti (most available, 14+ nodes)
+- `gpu4070` - NVIDIA RTX 4070 (good performance)
+
+### Selecting Specific GPU Types
+Use `-C` flag to request specific GPU features:
+```bash
+#SBATCH -C gpu2h100     # Request H100 (best)
+#SBATCH -C gpu4090      # Request RTX 4090
+#SBATCH -C gpu2080      # Request RTX 2080 Ti (most available)
+```
+
+### Basic GPU Request
+When requesting GPU resources:
+- Always specify `--gres=gpu:N` where N is number of GPUs
+- Use `--partition=markov_gpu` for GPU access
+- Optionally specify GPU type with `-C <feature>`
+
+### Automatic Best GPU Selection
+Before submitting jobs, check GPU availability:
+```bash
+si  # Shows real-time GPU status
+```
+
+**Automatic submission to best available GPU:**
+```bash
+bash scripts_corrected/submit_best_gpu.sh <script.slurm>
+```
+
+**Or get GPU type for manual use:**
+```bash
+GPU_TYPE=$(bash scripts_corrected/select_best_gpu.sh)
+sbatch -C $GPU_TYPE <script.slurm>
+```
+
+**GPU Selection Priority** (best to worst):
+1. `gpu2h100` - H100 (fastest, 2 nodes)
+2. `gpu4090` - RTX 4090 (excellent, 1 node)  
+3. `gpul40s` - L40S (good VRAM, 2 nodes)
+4. `gpu4070` - RTX 4070 (good, 1 node)
+5. `gpu2080` - RTX 2080 Ti (most available, 14+ nodes)
+
+See `GPU_SELECTION_GUIDE.md` for detailed information.
+
+## Monitoring Jobs
+- Check job status: `squeue -u $USER`
+- Cancel job: `scancel <job_id>`
+- Check job details: `scontrol show job <job_id>`
+
+## Common Mistakes to Avoid
+1. ❌ Running jobs in home directory instead of scratch space
+2. ❌ Running computational work on login nodes
+3. ❌ Using unlimited parallel compilation (`make -j`)
+4. ❌ Forgetting to copy results back from scratch before job ends
+5. ❌ Not specifying resource requirements accurately
+6. ❌ Forgetting VPN when accessing from off-campus
+
+## Python Environment Best Practices
+- Create virtual environments in home directory
+- Activate environment in SLURM script before running Python
+- Copy only necessary data to scratch, not entire environment
+- Use `python -u` flag for unbuffered output in batch jobs
+
+## File Permissions and Data
+- Home directory: For code, environments, small files
+- Scratch space: For job execution, large datasets, temporary files
+- Check disk usage: `du -sh <directory>`
+- Check quotas: `quota -s`
+
+## When Generating SLURM Scripts
+Always include:
+1. Proper shebang: `#!/bin/bash`
+2. All required SBATCH directives
+3. `set -euo pipefail` for error handling
+4. `cd` to appropriate scratch space
+5. Data transfer to/from scratch
+6. Cleanup commands
+7. Module loads if needed
+8. Error and output log paths
+
+## Testing and Validation
+- Test scripts with short wall times first
+- Use interactive sessions for debugging
+- Verify scratch space usage and cleanup
+- Check output/error logs after job completion
+
+### Cluster Verification Test
+Run the verification script to test your setup:
+```bash
+sbatch scripts_corrected/test_cluster_setup.slurm
+```
+
+This tests:
+- Scratch space access and I/O
+- Module system (PyTorch-bundle)
+- Python environment
+- CUDA/GPU availability and computation
+- Data downloading (CIFAR-10)
+- File copying to/from scratch
+- Cleanup procedures
+
+## Important Notes Based on Testing
+
+### Environment Variables
+- `$TMPDIR` and `$PFSDIR` are **only available within SLURM jobs**, not on login nodes
+- `$TMPDIR` = `/tmp/job.JOBID.markov2` (unique per job, auto-created, auto-cleaned)
+- `$PFSDIR` = `/scratch/markov2/jobs/job.JOBID.markov2` (alternative scratch space)
+- Disk space: `$TMPDIR` has ~1.7TB available
+- **Use `$TMPDIR` for scratch work** - simpler and automatically managed
+
+### Disk Space Management
+- CIFAR-10 dataset (~170MB) is automatically downloaded to scratch by PyTorch
+- Pretrained models are cached in `~/.cache/torch/hub/checkpoints/` in home directory
+- Only copy back essential results (model checkpoints), not datasets or temp files
+
+### Common Pitfalls in Existing Scripts
+Many existing scripts in repositories (including this one) may violate best practices:
+- Running in home directory instead of scratch
+- Missing data copy operations
+- No scratch cleanup
+- Incorrect partition names
+- Missing module loads
+
+**Always verify scripts against official documentation, not against existing code.**

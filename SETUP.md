@@ -6,7 +6,7 @@
 
 ```bash
 cd /home/jxl2244/ecse397-efficient-deep-learning
-bash setup_python_env.sh
+bash scripts/setup_env.sh
 ```
 
 This loads PyTorch from HPC modules and installs timm (~6MB).
@@ -14,9 +14,8 @@ This loads PyTorch from HPC modules and installs timm (~6MB).
 ### 2. Submit Jobs
 
 ```bash
-sbatch scripts/retrain_resnet18.sh
-sbatch scripts/reprune_vit_unstructured.sh
-sbatch scripts/reprune_vit_structured.sh
+# Submit all training and pruning jobs with dependencies
+bash scripts/submit_all.sh
 ```
 
 Done! SLURM scripts load the environment automatically.

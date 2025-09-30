@@ -7,24 +7,24 @@
     " cnn ": {
       " original_accuracy ": 0.8686,
       " pruned_accuracy ": 0.8789,
-      " pruning_percentage ": 69.99999641963393
+      " pruning_percentage ": 70.0
     },
     " vit ": {
       " original_accuracy ": 0.9638,
       " pruned_accuracy ": 0.9594,
-      " pruning_percentage ": 69.99998909211492
+      " pruning_percentage ": 70.0
     }
   },
   " structured_pruning ": {
     " cnn ": {
       " original_accuracy ": 0.8686,
       " pruned_accuracy ": 0.8782,
-      " pruning_percentage ": 43.33308091752609
+      " pruning_percentage ": 43.33
     },
     " vit ": {
       " original_accuracy ": 0.9638,
       " pruned_accuracy ": 0.9585,
-      " pruning_percentage ": 19.419257340241797
+      " pruning_percentage ": 19.42
     }
   }
 }

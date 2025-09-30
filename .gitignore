@@ -42,3 +42,5 @@ pruning_lab/models_saved/
 
 # Job status
 JOB_STATUS.txt
+
+data/*
