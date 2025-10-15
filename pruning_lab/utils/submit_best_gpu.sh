@@ -27,7 +27,8 @@ fi
 echo "Checking GPU availability..."
 # Resolve this script's directory to call select_best_gpu.sh reliably
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GPU_TYPE=$(bash "$SCRIPT_DIR/select_best_gpu.sh" 2>&1)
+# Capture ONLY stdout from selector; it prints diagnostics to stderr
+GPU_TYPE=$(bash "$SCRIPT_DIR/select_best_gpu.sh")
 
 echo ""
 echo "Selected GPU type: $GPU_TYPE"
@@ -35,7 +36,12 @@ echo ""
 
 # Show current GPU status
 echo "Current GPU status:"
-si | grep markov_gpu | head -10
+if command -v si >/dev/null 2>&1; then
+  si | grep markov_gpu | head -10 || true
+else
+  # Fallback to sinfo if 'si' is unavailable
+  sinfo -o "%10P %20N %8a %8t %5D %10T %10G" | grep markov_gpu | head -10 || true
+fi
 echo ""
 
 # Submit job with selected GPU constraint

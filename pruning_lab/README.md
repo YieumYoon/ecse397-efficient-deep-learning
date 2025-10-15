@@ -35,9 +35,7 @@ ecse397-efficient-deep-learning/
 │   |   ├── train_vit.slurm
 │   |   ├── prune_cnn.slurm
 │   |   ├── prune_vit.slurm
-│   |   ├── prune_vit_scratch.slurm
-│   |   ├── select_best_gpu.sh
-│   |   └── submit_best_gpu.sh
+│   |   └── prune_vit_scratch.slurm
 │   │
 │   │
 │   └── models_saved/               # Model checkpoints
@@ -98,16 +96,12 @@ cd /home/jxl2244/ecse397-efficient-deep-learning
 # Check GPU availability
 si | grep markov_gpu
 
-# RECOMMENDED: Auto-select best GPU and submit training
-bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
-bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_vit.slurm
-
-# Or manually request specific GPU type
+# Request specific GPU type (recommended)
 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm  # H100 (fastest)
 sbatch -C gpu4090 pruning_lab/utils/train_vit.slurm   # RTX 4090 (2nd fastest)
 
 # Quick test (1 epoch)
-EPOCHS=1 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
+EPOCHS=1 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 
 # Verify cluster setup (if available)
 # sbatch pruning_lab/utils/test_cluster_setup.slurm
@@ -118,9 +112,6 @@ EPOCHS=1 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.s
 **CRITICAL:** Always specify GPU type to avoid slow nodes!
 
 ```bash
-# ✅ GOOD: Use GPU selection wrapper
-bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
-
 # ✅ GOOD: Request specific fast GPU
 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 
@@ -150,7 +141,6 @@ sacct -j <job_id> --format=NodeList    # Check node assignment
 - Scripts run in $TMPDIR (job-local scratch, auto-cleaned by SLURM)
 - SLURM scripts use `.venv` (PyTorch 2.5.1+cu121) and copy/activate it on the node
 - Full cluster details in `CLUSTER_DOCUMENTATION.md` and `.cursorrules`
-- GPU selection scripts: `pruning_lab/utils/select_best_gpu.sh`, `pruning_lab/utils/submit_best_gpu.sh`
 
 ---
 

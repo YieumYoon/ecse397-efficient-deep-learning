@@ -316,17 +316,15 @@ si | grep -E "idle|mix"         # Focus on usable nodes
 
 Interpreting columns: STATE = idle (best), mix (ok), alloc/down/drain (unusable). CPUS(A/I/O/T) shows allocated/idle CPU cores.
 
-### Automatic GPU Selection (Recommended)
+### Explicit GPU Selection (Recommended)
 
 ```bash
-# Submit with auto-selected best GPU (H100 > 4090 > L40S > 4070 > 2080)
-bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
+# Submit with explicit fast GPU (H100 > 4090 > L40S > 4070 > 2080)
+sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 
 # With environment variables
-EPOCHS=100 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
+EPOCHS=100 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 ```
-
-Under the hood, `pruning_lab/utils/select_best_gpu.sh` parses `si` output and returns the best available GPU feature. The wrapper adds `-C <feature>` to `sbatch`.
 
 ### Manual GPU Selection
 
@@ -346,15 +344,12 @@ Add a constraint directly in a `.slurm` script:
 ### Usage Examples
 
 ```bash
-# 1) Auto-select best GPU
-bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
-
-# 2) Check then submit
-GPU=$(bash pruning_lab/utils/select_best_gpu.sh)
-sbatch -C "$GPU" pruning_lab/utils/train_cnn.slurm
-
-# 3) Try H100, fallback to 2080 Ti
+# 1) Request H100; fallback to 2080 Ti if no H100
 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm || sbatch -C gpu2080 pruning_lab/utils/train_cnn.slurm
+
+# 2) Manual choices
+sbatch -C gpu4090  pruning_lab/utils/train_cnn.slurm
+sbatch -C gpul40s  pruning_lab/utils/train_cnn.slurm
 ```
 
 ### Tips
@@ -363,7 +358,6 @@ sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm || sbatch -C gpu2080 prunin
 # Helpful aliases (put in ~/.bashrc)
 alias gpu_status='si | grep markov_gpu | grep -E "idle|mix"'
 alias gpu_h100='si | grep gpu2h100'
-alias gpubest='bash ~/ecse397-efficient-deep-learning/pruning_lab/utils/select_best_gpu.sh'
 ```
 
 ---
@@ -373,10 +367,7 @@ alias gpubest='bash ~/ecse397-efficient-deep-learning/pruning_lab/utils/select_b
 ### Submit Jobs
 
 ```bash
-# Auto-select best GPU (recommended)
-bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
-
-# Manual GPU choice
+# Submit with explicit GPU feature
 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 sbatch -C gpu2080  pruning_lab/utils/train_cnn.slurm
 ```
@@ -395,11 +386,11 @@ tail -f logs/train_cnn_*.out
 
 ```bash
 # Quick test (1 epoch)
-EPOCHS=1 bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/train_cnn.slurm
+EPOCHS=1 sbatch -C gpu2h100 pruning_lab/utils/train_cnn.slurm
 
 # Pruning
 PRUNE_TYPE=unstructured AMOUNT=0.7 \
-  bash pruning_lab/utils/submit_best_gpu.sh pruning_lab/utils/prune_cnn.slurm
+  sbatch -C gpu2h100 pruning_lab/utils/prune_cnn.slurm
 ```
 
 ### Scratch Space Reminder

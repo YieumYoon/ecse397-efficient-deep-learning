@@ -1,0 +1,12 @@
+{
+    "cnn": {
+        "teacher_accuracy": 0.9521999999999999,
+        "student_accuracy_without_kd": 0.9458,
+        "student_accuracy_with_kd": 0.9519
+    },
+    "vit": {
+        "teacher_accuracy": 0.9346,
+        "student_accuracy_without_kd": 0.8096,
+        "student_accuracy_with_kd": 0.8294
+    }
+}
