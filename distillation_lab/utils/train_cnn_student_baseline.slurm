@@ -11,6 +11,9 @@
 # Error handling
 set -euo pipefail
 
+# Ensure logs directory exists
+mkdir -p $HOME/ecse397-efficient-deep-learning/logs
+
 # CRITICAL: Change to scratch space
 WORK_DIR="$TMPDIR"
 mkdir -p "$WORK_DIR"
@@ -22,12 +25,10 @@ echo "Node: $SLURMD_NODENAME"
 
 # Copy project code to scratch
 cp -r $HOME/ecse397-efficient-deep-learning/distillation_lab .
-cp -r $HOME/ecse397-efficient-deep-learning/pruning_lab .
 
-# Load environment
+# Load PyTorch bundle per cluster guidelines
 module purge
-module load Python/3.11.3-GCCcore-12.3.0
-module load CUDA/12.1.1
+module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1
 
 # Activate virtual environment from home
 source $HOME/ecse397-efficient-deep-learning/.venv/bin/activate
@@ -44,7 +45,7 @@ BATCH_SIZE=${BATCH_SIZE:-128}
 # Create local output directory
 mkdir -p models_saved
 
-# Ensure Python can import both copied packages
+# Ensure Python can import the copied package
 export PYTHONPATH="$WORK_DIR:$PYTHONPATH"
 
 # Run student baseline training (ResNet-8 without KD)

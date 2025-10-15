@@ -28,7 +28,8 @@ sbatch -C gpu2h100 distillation_lab/utils/distill_vit.slurm
 squeue -u $USER
 tail -f logs/distill_*.out
 
-# 3. After all jobs complete, generate report
+# 3. After all jobs complete, generate report (CPU OK)
+module purge && module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1
 python3 -m distillation_lab.main report
 
 # 4. Verify deliverables
@@ -162,6 +163,10 @@ tree distillation_lab -I "__pycache__|*.pyc"
 zip -r jxl2244_distillation_lab.zip distillation_lab/ \
   -x "distillation_lab/__pycache__/*" \
   -x "distillation_lab/*/__pycache__/*"
+  -x "distillation_lab/IMPLEMENTATION_SUMMARY.md"
+  -x "distillation_lab/Lab-2.md"
+  -x "distillation_lab/README.md"
+  -x "distillation_lab/test_setup.py"
 
 # 3. Verify zip contents
 unzip -l jxl2244_distillation_lab.zip | head -20

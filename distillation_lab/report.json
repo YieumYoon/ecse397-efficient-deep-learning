@@ -1,6 +1,6 @@
 {
     "cnn": {
-        "teacher_accuracy": 0.9521999999999999,
+        "teacher_accuracy": 0.9522,
         "student_accuracy_without_kd": 0.9458,
         "student_accuracy_with_kd": 0.9519
     },

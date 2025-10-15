@@ -27,7 +27,7 @@ def distill_epoch(
     temperature: float = 4.0,
     use_amp: bool = False,
     grad_clip: Optional[float] = None,
-) -> Tuple[float, float, float]:
+) -> Tuple[float, float]:
     """Train student model with knowledge distillation for one epoch.
     
     Args:
@@ -42,7 +42,7 @@ def distill_epoch(
         grad_clip: Gradient clipping value
     
     Returns:
-        Tuple of (average_loss, hard_accuracy, soft_accuracy)
+        Tuple of (average_loss, hard_accuracy)
     """
     student.train()
     teacher.eval()  # Teacher is always in eval mode

@@ -5,9 +5,6 @@ This module implements the loss functions used in knowledge distillation:
 2. Combined loss (hard targets + soft targets)
 3. Optional feature-based distillation (FitNets style)
 
-Reference:
-    Hinton et al., "Distilling the Knowledge in a Neural Network" (2015)
-    https://arxiv.org/abs/1503.02531
 """
 
 import torch

@@ -94,9 +94,9 @@ sbatch -C gpu2h100 distillation_lab/utils/train_vit_student_baseline.slurm
 sbatch -C gpu2h100 distillation_lab/utils/distill_cnn.slurm
 sbatch -C gpu2h100 distillation_lab/utils/distill_vit.slurm
 
-# 4. Generate report
+# 4. Generate report (CPU OK)
+module purge && module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1
 python -m distillation_lab.main report --models-dir distillation_lab/models_saved
-srun --partition=markov_cpu --time=00:05:00 --cpus-per-task=2 --mem=4G --pty bash -lc 'module purge && module load PyTorch-bundle/2.1.2-foss-2023a-CUDA-12.1.1 && cd /home/jxl2244/ecse397-efficient-deep-learning && python3 -m distillation_lab.main report'
 ```
 
 ### Monitor Jobs

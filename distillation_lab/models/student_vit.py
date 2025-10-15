@@ -102,8 +102,8 @@ def get_distillation_params():
         'weight_decay': 0.05,
         'scheduler': 'cosine',
         't_max': 150,
-        'alpha': 0.5,        # Weight for hard targets
-        'temperature': 4.0,  # Temperature for soft targets
+        'alpha': 0.5,        
+        'temperature': 4.0,  
         'img_size': 224,
     }
 
